@@ -20,6 +20,15 @@ app.get('/users', (req, res) => {
     });
 });
 
+app.post('/api/register', (req, res) => {
+    userService.registerUser(req.body).then(function(msg) {
+        res.json({"message": msg});
+    })
+    .catch(function(msg) {
+        res.status(422).json({"message": msg});
+    });
+});
+
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');
