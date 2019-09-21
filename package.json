@@ -1,0 +1,22 @@
+{
+  "name": "prj666-canpolls-api",
+  "version": "1.0.0",
+  "description": "api for the CanPolls app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luca-padula/PRJ666-CanPolls-api.git"
+  },
+  "author": "PRJ666 group 3",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/luca-padula/PRJ666-CanPolls-api/issues"
+  },
+  "homepage": "https://github.com/luca-padula/PRJ666-CanPolls-api#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
