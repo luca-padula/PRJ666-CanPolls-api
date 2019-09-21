@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/luca-padula/PRJ666-CanPolls-api#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mysql": "^2.17.1"
   }
 }
