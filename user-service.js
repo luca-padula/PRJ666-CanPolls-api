@@ -3,19 +3,6 @@ const database = require('./database.js');
 
 let db = database.getDatabase();
 
-module.exports.getAllUsers = function() {
-    return new Promise(function(resolve, reject) {
-        db.query('SELECT * FROM `Users`', function(err, results) {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(results);
-            }
-        });
-    });
-}
-
 module.exports.registerUser = function(userData) {
     return new Promise(function(resolve, reject) {
         if (userData.password != userData.password2) {
@@ -23,15 +10,9 @@ module.exports.registerUser = function(userData) {
         }
         else {
             bcrypt.hash(userData.password, 10).then(function(hash) {
-                let newUser = {
-                    "userName": userData.userName,
-                    "email": userData.email,
-                    "password": hash
-                };
-                console.log(newUser.password);
-                let query = db.query('INSERT INTO `Users` (userName, email, password) VALUES (?)', newUser, function(err, results) {
+                let query = db.query('INSERT INTO `Users` (userName, email, password) VALUES (?, ?, ?)',
+                [userData.userName, userData.email, hash], function(err, results) {
                     if (err) {
-                        console.log(err);
                         if (err.errno == 1062) {
                             reject('Username already taken');
                         }
@@ -40,14 +21,63 @@ module.exports.registerUser = function(userData) {
                         }
                     }
                     else {
-                        resolve('User ' + newUser.userName + ' successfully registered');
+                        resolve('User ' + userData.userName + ' successfully registered');
                     }
                 });
-                console.log(query);
+                console.log(query.sql);
             })
             .catch(function(err) {
                 reject(err);
             })
         }
+    });
+}
+
+module.exports.checkUser = function(userData) {
+    return new Promise(function(resolve, reject) {
+        let foundUser;
+        db.query('SELECT * FROM `Users` WHERE `email` = ?', [userData.user], function(err, results) {
+            if (err) {
+                reject(err);
+            }
+            else if (results.length != 0) {
+                console.log(results[0]);
+                foundUser = results[0];
+                bcrypt.compare(userData.password, foundUser.password).then(function(passwordsMatch) {
+                    if (passwordsMatch) {
+                        resolve(foundUser);
+                    }
+                    else {
+                        reject('Incorrect email, username, or password entered');
+                    }
+                }).catch(function(err) {
+                    reject('error comparing passwords');
+                });
+            }
+            else {
+                db.query('SELECT * FROM `Users` WHERE `userName` = ?', [userData.user], function(err, results) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else if (results.length != 0) {
+                        console.log(results[0]);
+                        foundUser = results[0];
+                        bcrypt.compare(userData.password, foundUser.password).then(function(passwordsMatch) {
+                            if (passwordsMatch) {
+                                resolve(foundUser);
+                            }
+                            else {
+                                reject('Incorrect email, username, or password entered');
+                            }
+                        }).catch(function(err) {
+                            reject('error comparing passwords');
+                        });
+                    }
+                    else {
+                        reject('Incorrect email, username, or password entered');
+                    }
+                });
+            }
+        });
     });
 }

@@ -11,21 +11,20 @@ app.use(bodyParser.json());
 
 // routes
 
-app.get('/users', (req, res) => {
-    userService.getAllUsers().then(function(results) {
-        res.json(results);
-    })
-    .catch(function() {
-        res.status(500).send('500 code');
-    });
-});
-
 app.post('/api/register', (req, res) => {
     userService.registerUser(req.body).then(function(msg) {
         res.json({"message": msg});
     })
     .catch(function(msg) {
         res.status(422).json({"message": msg});
+    });
+});
+
+app.post('/api/login', (req, res) => {
+    userService.checkUser(req.body).then(function(user) {
+        res.json({ "message": "Successfully logged in as user: " + user.userName });
+    }).catch(function(msg) {
+        res.status(422).json({ "message": msg });
     });
 });
 
