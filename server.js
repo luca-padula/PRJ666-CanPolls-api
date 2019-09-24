@@ -9,8 +9,7 @@ var app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// routes
-
+// User routes
 app.post('/api/register', (req, res) => {
     userService.registerUser(req.body).then(function(msg) {
         res.json({"message": msg});
