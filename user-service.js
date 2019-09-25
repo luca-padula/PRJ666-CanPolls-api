@@ -3,6 +3,20 @@ const database = require('./database.js');
 
 let db = database.getDatabase();
 
+// Example function to see protection of a route using JWT, will be removed
+module.exports.getAllUsers = function() {
+    return new Promise(function(resolve, reject) {
+        db.query('SELECT * FROM `Users`', function(err, results) {
+            if (err) {
+                reject('couldnt get users');
+            }
+            else {
+                resolve(results);
+            }
+        });
+    });
+}
+
 module.exports.registerUser = function(userData) {
     return new Promise(function(resolve, reject) {
         if (userData.password != userData.password2) {

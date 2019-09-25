@@ -1,15 +1,53 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const passportJWT = require('passport-jwt');
 const database = require('./database.js')
 const userService = require('./user-service.js');
 
 const HTTP_PORT = process.env.PORT || 8080;
 var app = express();
+
+// Set up the JWT strategy for authentication
+var ExtractJwt = passportJWT.ExtractJwt;
+var JwtStrategy = passportJWT.Strategy;
+var jwtOptions = {};
+jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
+jwtOptions.secretOrKey = '0Y^@gUsS8ON2oM4Vnmk%SbQ9P6LqUIaM%A2m0o85j#3j#i*yMh&Ol1d';
+var strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
+    console.log('Payload received', jwt_payload);
+    if (jwt_payload) {
+        next(null, {
+            userId: jwt_payload.userId,
+            userName: jwt_payload.userName,
+            email: jwt_payload.email
+        });
+    }
+    else {
+        next(null, false);
+    }
+});
+
+// Make passport use the strategy set up previously and initialize
+passport.use(strategy);
+app.use(passport.initialize());
+
 app.use(cors());
 app.use(bodyParser.json());
 
 // User routes
+// Example route to see protection of a route using JWT, will be removed
+app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res) => {
+    userService.getAllUsers().then(function(msg) {
+        res.json({"message": msg});
+    })
+    .catch(function(msg) {
+        res.status(422).json({"message": msg});
+    });
+});
+
 app.post('/api/register', (req, res) => {
     userService.registerUser(req.body).then(function(msg) {
         res.json({"message": msg});
@@ -21,7 +59,13 @@ app.post('/api/register', (req, res) => {
 
 app.post('/api/login', (req, res) => {
     userService.checkUser(req.body).then(function(user) {
-        res.json({ "message": "Successfully logged in as user: " + user.userName });
+        var payload = {
+            userId: user.userId,
+            userName: user.userName,
+            email: user.email
+        };
+        var token = jwt.sign(payload, jwtOptions.secretOrKey);
+        res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
     }).catch(function(msg) {
         res.status(422).json({ "message": msg });
     });
