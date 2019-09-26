@@ -50,7 +50,7 @@ module.exports.registerUser = function(userData) {
 module.exports.checkUser = function(userData) {
     return new Promise(function(resolve, reject) {
         let foundUser;
-        db.query('SELECT * FROM `Users` WHERE `email` = ?', [userData.user], function(err, results) {
+        db.query('SELECT * FROM `Users` WHERE `email` = ?', [userData.userName], function(err, results) {
             if (err) {
                 reject(err);
             }
@@ -69,7 +69,7 @@ module.exports.checkUser = function(userData) {
                 });
             }
             else {
-                db.query('SELECT * FROM `Users` WHERE `userName` = ?', [userData.user], function(err, results) {
+                db.query('SELECT * FROM `Users` WHERE `userName` = ?', [userData.userName], function(err, results) {
                     if (err) {
                         reject(err);
                     }
