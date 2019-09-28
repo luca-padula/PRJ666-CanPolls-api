@@ -19,31 +19,27 @@ module.exports.getAllUsers = function() {
 
 module.exports.registerUser = function(userData) {
     return new Promise(function(resolve, reject) {
-        if (userData.password != userData.password2) {
-            reject('Passwords do not match');
-        }
-        else {
-            bcrypt.hash(userData.password, 10).then(function(hash) {
-                let query = db.query('INSERT INTO `Users` (userName, email, password) VALUES (?, ?, ?)',
-                [userData.userName, userData.email, hash], function(err, results) {
-                    if (err) {
-                        if (err.errno == 1062) {
-                            reject('Username already taken');
-                        }
-                        else {
-                            reject('Error creating user');
-                        }
+        bcrypt.hash(userData.password, 10).then(function(hash) {
+            let query = db.query('INSERT INTO `Users` (userName, email, password) VALUES (?, ?, ?)',
+            [userData.userName, userData.email, hash], function(err, results) {
+                if (err) {
+                    console.log(err);
+                    if (err.errno == 1062) {
+                        reject('Username already taken');
                     }
                     else {
-                        resolve('User ' + userData.userName + ' successfully registered');
+                        reject('Error creating user');
                     }
-                });
-                console.log(query.sql);
-            })
-            .catch(function(err) {
-                reject(err);
-            })
-        }
+                }
+                else {
+                    resolve('User ' + userData.userName + ' successfully registered');
+                }
+            });
+            console.log(query.sql);
+        })
+        .catch(function(err) {
+            reject(err);
+        })
     });
 }
 

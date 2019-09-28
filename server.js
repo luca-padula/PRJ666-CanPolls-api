@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
+const { check, validationResult } = require('express-validator');
 const database = require('./database.js')
 const userService = require('./user-service.js');
 
@@ -48,7 +49,26 @@ app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res)
     });
 });
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', [
+    // Validate user input using express-validator
+    check('email').isEmail().withMessage('Invalid email entered'),
+    check('password')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
+    check('password2').custom((value, {req}) => {
+        if (value !== req.body.password) {
+            throw new Error('Passwords do not match');
+        }
+        return true;
+    })
+], (req, res) => {
+    const errors = validationResult(req);
+    // Fail the request if there are validation errors and return them
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ "validationErrors": errors.array() });
+    }
     userService.registerUser(req.body).then(function(msg) {
         res.json({"message": msg});
     })
