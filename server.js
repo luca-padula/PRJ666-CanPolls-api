@@ -17,7 +17,7 @@ var JwtStrategy = passportJWT.Strategy;
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
 jwtOptions.secretOrKey = '0Y^@gUsS8ON2oM4Vnmk%SbQ9P6LqUIaM%A2m0o85j#3j#i*yMh&Ol1d';
-var strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
+var strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
     console.log('Payload received', jwt_payload);
     if (jwt_payload) {
         next(null, {
@@ -41,10 +41,10 @@ app.use(bodyParser.json());
 // User routes
 // Example route to see protection of a route using JWT, will be removed
 app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res) => {
-    userService.getAllUsers().then(function(msg) {
+    userService.getAllUsers().then((msg) => {
         res.json({"message": msg});
     })
-    .catch(function(msg) {
+    .catch((msg) => {
         res.status(422).json({"message": msg});
     });
 });
@@ -52,6 +52,26 @@ app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res)
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email').isEmail().withMessage('Invalid email entered'),
+    check('email').custom((value) => {
+        return userService.checkIfExists('email', value).then((foundUsers) => {
+            if (foundUsers.length != 0) {
+                return Promise.reject('Email is already registered');
+            }
+        })
+        .catch((msg) => {
+            return Promise.reject(msg);
+        });
+    }),
+    check('userName').custom((value) => {
+        return userService.checkIfExists('userName', value).then((foundUsers) => {
+            if (foundUsers.length != 0) {
+                return Promise.reject('Username already taken');
+            }
+        })
+        .catch((msg) => {
+            return Promise.reject(msg);
+        });
+    }),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
         .matches(/\d/).withMessage('Password must contain a number')
@@ -69,16 +89,16 @@ app.post('/api/register', [
     if (!errors.isEmpty()) {
         return res.status(422).json({ "validationErrors": errors.array() });
     }
-    userService.registerUser(req.body).then(function(msg) {
+    userService.registerUser(req.body).then((msg) => {
         res.json({"message": msg});
     })
-    .catch(function(msg) {
+    .catch((msg) => {
         res.status(422).json({"message": msg});
     });
 });
 
 app.post('/api/login', (req, res) => {
-    userService.checkUser(req.body).then(function(user) {
+    userService.checkUser(req.body).then((user) => {
         var payload = {
             userId: user.userId,
             userName: user.userName,
@@ -86,7 +106,7 @@ app.post('/api/login', (req, res) => {
         };
         var token = jwt.sign(payload, jwtOptions.secretOrKey);
         res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
-    }).catch(function(msg) {
+    }).catch((msg) => {
         res.status(422).json({ "message": msg });
     });
 });
@@ -97,9 +117,9 @@ app.use((req, res) => {
 });
 
 // connect to database and setup http server to listen on HTTP_PORT
-database.initializeDatabase().then(function() {
+database.initializeDatabase().then(() => {
     app.listen(HTTP_PORT, () => { console.log("API listening on: " + HTTP_PORT) });
 })
-.catch(function(err) {
+.catch((err) => {
     console.log('Unable to start the server: ', err);
 })
