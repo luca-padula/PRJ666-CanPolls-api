@@ -67,33 +67,33 @@ module.exports.checkUser = function(userData) {
             else if (results.length != 0) {
                 console.log(results[0]);
                 foundUser = results[0];
-                bcrypt.compare(userData.password, foundUser.password).then(function(passwordsMatch) {
+                bcrypt.compare(userData.password, foundUser.password).then((passwordsMatch) => {
                     if (passwordsMatch) {
                         resolve(foundUser);
                     }
                     else {
                         reject('Incorrect email, username, or password entered');
                     }
-                }).catch(function(err) {
+                }).catch((err) => {
                     reject('error comparing passwords');
                 });
             }
             else {
-                db.query('SELECT * FROM `Users` WHERE `userName` = ?', [userData.userName], function(err, results) {
+                db.query('SELECT * FROM `Users` WHERE `userName` = ?', [userData.userName], (err, results) => {
                     if (err) {
                         reject('An error occured');
                     }
                     else if (results.length != 0) {
                         console.log(results[0]);
                         foundUser = results[0];
-                        bcrypt.compare(userData.password, foundUser.password).then(function(passwordsMatch) {
+                        bcrypt.compare(userData.password, foundUser.password).then((passwordsMatch) => {
                             if (passwordsMatch) {
                                 resolve(foundUser);
                             }
                             else {
                                 reject('Incorrect email, username, or password entered');
                             }
-                        }).catch(function(err) {
+                        }).catch((err) => {
                             reject('error comparing passwords');
                         });
                     }

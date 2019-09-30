@@ -51,27 +51,32 @@ app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res)
 
 app.post('/api/register', [
     // Validate user input using express-validator
-    check('email').isEmail().withMessage('Invalid email entered'),
-    check('email').custom((value) => {
-        return userService.checkIfExists('email', value).then((foundUsers) => {
-            if (foundUsers.length != 0) {
-                return Promise.reject('Email is already registered');
-            }
-        })
-        .catch((msg) => {
-            return Promise.reject(msg);
-        });
-    }),
-    check('userName').custom((value) => {
-        return userService.checkIfExists('userName', value).then((foundUsers) => {
-            if (foundUsers.length != 0) {
-                return Promise.reject('Username already taken');
-            }
-        })
-        .catch((msg) => {
-            return Promise.reject(msg);
-        });
-    }),
+    check('email')
+        .isEmail().withMessage('Invalid email entered')
+        .custom((value) => {
+            return userService.checkIfExists('email', value).then((foundUsers) => {
+                if (foundUsers.length != 0) {
+                    return Promise.reject('Email is already registered');
+                }
+            })
+            .catch((msg) => {
+                return Promise.reject(msg);
+            });
+        }),
+    check('userName')
+        .trim()
+        .not().isEmpty().withMessage('Username cannot be empty')
+        .isLength({ max: 15 }).withMessage('Username is too long')
+        .custom((value) => {
+            return userService.checkIfExists('userName', value).then((foundUsers) => {
+                if (foundUsers.length != 0) {
+                    return Promise.reject('Username already taken');
+                }
+            })
+            .catch((msg) => {
+                return Promise.reject(msg);
+            });
+        }),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
         .matches(/\d/).withMessage('Password must contain a number')
@@ -84,8 +89,8 @@ app.post('/api/register', [
         return true;
     })
 ], (req, res) => {
-    const errors = validationResult(req);
     // Fail the request if there are validation errors and return them
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ "validationErrors": errors.array() });
     }
