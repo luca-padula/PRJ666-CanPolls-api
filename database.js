@@ -2,29 +2,53 @@
 Wrapper file for the instance of our database that will be shared among all of our modules
 */
 
-const mysql = require('mysql');
+const Sequelize = require('sequelize');
 
-var database = mysql.createConnection({
-    host     : 'mymysql.senecacollege.ca',
-    user     : 'prj666_193a03',
-    password : 'adQZ@8552',
-    database : 'prj666_193a03'
+const database = new Sequelize('prj666_193a03', 'prj666_193a03', 'adQZ@8552', {
+    host: 'mymysql.senecacollege.ca',
+    dialect: 'mysql',
 });
 
-module.exports.initializeDatabase = function() {
-    return new Promise(function(resolve, reject) {
-        database.connect(function(err) {
-            if (err) {
-                reject('unable to connect to database: ' + err.message);
-            }
-            else {
-                resolve();
-            }
-        });
-    });
-}
-
-// function to get the instance of the database to use in a different module
+// Function to get the instance of the database to use in a different module
 module.exports.getDatabase = function() {
     return database;
+}
+
+// Model definitions
+module.exports.User = database.define('User', {
+    userId: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    userName: {
+        type: Sequelize.STRING,
+        unique: true
+    },
+    email: {
+        type: Sequelize.STRING,
+        unique: true
+    },
+    password: Sequelize.STRING,
+    firstName: Sequelize.STRING,
+    lastName: Sequelize.STRING,
+    rejectionCount: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+    }
+})
+
+// Function to initialize database connection when starting server
+module.exports.initializeDatabase = function() {
+    return new Promise((resolve, reject) => {
+        database
+            .authenticate()
+            .then(database.sync())
+            .then(() => {
+                resolve();
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
 }

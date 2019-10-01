@@ -54,7 +54,7 @@ app.post('/api/register', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
         .custom((value) => {
-            return userService.checkIfExists('email', value).then((foundUsers) => {
+            return userService.findUserByEmail(value).then((foundUsers) => {
                 if (foundUsers.length != 0) {
                     return Promise.reject('Email is already registered');
                 }
@@ -68,7 +68,7 @@ app.post('/api/register', [
         .not().isEmpty().withMessage('Username cannot be empty')
         .isLength({ max: 15 }).withMessage('Username is too long')
         .custom((value) => {
-            return userService.checkIfExists('userName', value).then((foundUsers) => {
+            return userService.findUserByUsername(value).then((foundUsers) => {
                 if (foundUsers.length != 0) {
                     return Promise.reject('Username already taken');
                 }
