@@ -40,7 +40,7 @@ app.use(bodyParser.json());
 
 // User routes
 // Example route to see protection of a route using JWT, will be removed
-app.get('/api/users', passport.authenticate('jwt', {session: false}), (req, res) => {
+app.get('/api/users', (req, res) => {
     userService.getAllUsers().then((msg) => {
         res.json({"message": msg});
     })

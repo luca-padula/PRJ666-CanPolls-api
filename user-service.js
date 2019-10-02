@@ -1,7 +1,9 @@
 const bcrypt = require('bcryptjs');
-const database = require('./database.js');
 
-let User = database.User;
+// Import user model
+const UserModel = require('./models/User.js');
+
+let User = UserModel.User;
 
 // Example function to see protection of a route using JWT, will be removed
 module.exports.getAllUsers = function() {

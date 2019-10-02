@@ -14,30 +14,6 @@ module.exports.getDatabase = function() {
     return database;
 }
 
-// Model definitions
-module.exports.User = database.define('User', {
-    userId: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    userName: {
-        type: Sequelize.STRING,
-        unique: true
-    },
-    email: {
-        type: Sequelize.STRING,
-        unique: true
-    },
-    password: Sequelize.STRING,
-    firstName: Sequelize.STRING,
-    lastName: Sequelize.STRING,
-    rejectionCount: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-    }
-})
-
 // Function to initialize database connection when starting server
 module.exports.initializeDatabase = function() {
     return new Promise((resolve, reject) => {
