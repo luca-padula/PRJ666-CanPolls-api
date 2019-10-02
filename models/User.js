@@ -10,8 +10,7 @@ const databaseWrapper = require('../database.js');
 let database = databaseWrapper.getDatabase();
 
 // Use sequelize to define a new model which will be a table in our database
-// and export it
-module.exports.User = database.define('User', {
+var User = database.define('User', {
     userId: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -41,6 +40,9 @@ module.exports.User = database.define('User', {
 // Can use sequelize to specify relationships between tables
 //  i.e. could import a model called Events and do:
 
-// User.hasMany(Event); automatically creates foreign keys
+// User.hasMany(Event); - automatically creates foreign keys
 
 // see https://web322.ca/notes/week07 for more details
+
+// Export User model to use in other modules
+module.exports = {User};
