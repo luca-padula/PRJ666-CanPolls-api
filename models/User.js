@@ -18,13 +18,18 @@ var User = database.define('User', {
     },
     userName: {
         type: Sequelize.STRING(30),
+        allowNull: false,
         unique: true
     },
     email: {
         type: Sequelize.STRING(50),
+        allowNull: false,
         unique: true
     },
-    password: Sequelize.STRING(80),
+    password: {
+        type: Sequelize.STRING(80),
+        allowNull: false
+    },
     firstName: Sequelize.STRING(50),
     lastName: Sequelize.STRING(50),
     isVerified: {
