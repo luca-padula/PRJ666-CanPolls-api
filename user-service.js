@@ -44,13 +44,13 @@ module.exports.registerUser = function(userData) {
 
 module.exports.findUserByUsername = function(username) {
     return new Promise((resolve, reject) => {
-        User.findAll({
+        User.findOne({
             where: {
                 userName: username
             }
         })
-        .then((users) => {
-            resolve(users);
+        .then((user) => {
+            resolve(user);
         })
         .catch((err) => {
             reject('An error occured');
@@ -60,13 +60,13 @@ module.exports.findUserByUsername = function(username) {
 
 module.exports.findUserByEmail = function(email) {
     return new Promise((resolve, reject) => {
-        User.findAll({
+        User.findOne({
             where: {
                 email: email
             }
         })
-        .then((users) => {
-            resolve(users);
+        .then((user) => {
+            resolve(user);
         })
         .catch((err) => {
             reject('An error occured');
@@ -74,35 +74,12 @@ module.exports.findUserByEmail = function(email) {
     });
 }
 
-module.exports.checkUser = function(userData) {
+module.exports.checkUser = function (userData) {
     return new Promise((resolve, reject) => {
-        User.findOne({
-            where: {
-                userName: userData.userName
-            }
-        })
-        .then((foundUser) => {
-            if (foundUser) {
-                bcrypt.compare(userData.password, foundUser.password)
-                .then((match) => {
-                    if (match)
-                        resolve(foundUser);
-                    else
-                        reject('Incorrect email, username, or password entered');
-                })
-                .catch((err) => {
-                    reject('Error comparing passwords');
-                });
-            }
-            else {
-                User.findOne({
-                    where: {
-                        email: userData.userName
-                    }
-                })
-                .then((foundUser) => {
-                    if (foundUser) {
-                        bcrypt.compare(userData.password, foundUser.password)
+        this.findUserByUsername(userData.userName)
+            .then((foundUser) => {
+                if (foundUser) {
+                    bcrypt.compare(userData.password, foundUser.password)
                         .then((match) => {
                             if (match)
                                 resolve(foundUser);
@@ -112,16 +89,31 @@ module.exports.checkUser = function(userData) {
                         .catch((err) => {
                             reject('Error comparing passwords');
                         });
-                    }
-                    else {
-                        reject('Incorrect email, username, or password entered');
-                    }
-                });
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            reject('An error occured');
-        });
+                }
+                else {
+                    this.findUserByEmail(userData.userName)
+                        .then((foundUser) => {
+                            if (foundUser) {
+                                bcrypt.compare(userData.password, foundUser.password)
+                                    .then((match) => {
+                                        if (match)
+                                            resolve(foundUser);
+                                        else
+                                            reject('Incorrect email, username, or password entered');
+                                    })
+                                    .catch((err) => {
+                                        reject('Error comparing passwords');
+                                    });
+                            }
+                            else {
+                                reject('Incorrect email, username, or password entered');
+                            }
+                        });
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
     });
 }

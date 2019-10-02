@@ -54,8 +54,8 @@ app.post('/api/register', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
         .custom((value) => {
-            return userService.findUserByEmail(value).then((foundUsers) => {
-                if (foundUsers.length != 0) {
+            return userService.findUserByEmail(value).then((foundUser) => {
+                if (foundUser) {
                     return Promise.reject('Email is already registered');
                 }
             })
@@ -66,10 +66,11 @@ app.post('/api/register', [
     check('userName')
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
-        .isLength({ max: 15 }).withMessage('Username is too long')
+        .isLength({ max: 30 }).withMessage('Username is too long')
+        .not().matches(/@/).withMessage('Invalid character entered for Username')
         .custom((value) => {
-            return userService.findUserByUsername(value).then((foundUsers) => {
-                if (foundUsers.length != 0) {
+            return userService.findUserByUsername(value).then((foundUser) => {
+                if (foundUser) {
                     return Promise.reject('Username already taken');
                 }
             })
