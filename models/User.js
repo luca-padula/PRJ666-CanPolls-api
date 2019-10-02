@@ -36,6 +36,10 @@ var User = database.define('User', {
         type: Sequelize.BOOLEAN,
         defaultValue: false
     },
+    verificationHash: {
+        type: Sequelize.STRING(80),
+        allowNull: false
+    },
     rejectionCount: {
         type: Sequelize.INTEGER,
         defaultValue: 0

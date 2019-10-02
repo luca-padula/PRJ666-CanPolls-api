@@ -21,24 +21,59 @@ module.exports.getAllUsers = function() {
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
-        .then((hash) => {
-            User.create({
-                userName: userData.userName,
-                email: userData.email,
-                password: hash,
-                firstName: userData.firstName,
-                lastName: userData.lastName
-            })
-            .then(() => {
-                resolve('User ' + userData.userName + ' successfully registered');
+            .then((hash) => {
+                let randomString = Math.random().toString(36).replace(/[^a-z]+/g, '');
+                console.log(randomString);
+                let randomHash = bcrypt.hashSync(randomString, 10);
+                User.create({
+                    userName: userData.userName,
+                    email: userData.email,
+                    password: hash,
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    verificationHash: randomHash
+                })
+                    .then(() => {
+                        resolve('User ' + userData.userName + ' successfully registered');
+                    })
+                    .catch((err) => {
+                        reject('Couldnt register user');
+                    })
             })
             .catch((err) => {
-                reject('Couldnt register user');
+                reject(err);
             })
+    });
+}
+
+module.exports.verifyUser = function(userId, token) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: userId
+            }
         })
-        .catch((err) => {
-            reject(err);
-        })
+            .then((foundUser) => {
+                if (foundUser.isVerified || (token != foundUser.verificationHash)) {
+                    reject('Either you have the wrong link, or the user has already been verified');
+                }
+                User.update({
+                    isVerified: true
+                }, {
+                    where: { userId: foundUser.userId }
+                })
+                    .then(() => {
+                        resolve('User ' + foundUser.userName + ' successfully verified');
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        reject('Error updating user');
+                    });
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
     });
 }
 
