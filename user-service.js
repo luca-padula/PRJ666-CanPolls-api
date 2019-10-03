@@ -23,9 +23,11 @@ module.exports.getUserById = function(id) {
         db.query('SELECT * FROM `Users` where `userId` = ?', [id],(err, results) => {
             if (err) {
                 reject('couldnt get users');
+                console.log("not rejected");
             }
             else {
                 resolve(results);
+                console.log(results);
             }
         });
     });

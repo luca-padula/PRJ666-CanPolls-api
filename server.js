@@ -27,9 +27,10 @@ app.get('/api/users',  (req, res) => {
     });
 });
 
-app.get('/api/users/:id',  (req, res) => {
+app.get('/api/users/:id', (req, res) => {
     userService.getUserById(req.params['id']).then((msg) => {
-        res.json({"message": msg});
+        res.render("message", msg);
+        console.log(res.json);
     })
     .catch((msg) => {
         res.status(422).json({"message": msg});
