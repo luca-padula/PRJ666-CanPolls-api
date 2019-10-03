@@ -17,6 +17,20 @@ module.exports.getAllUsers = function() {
     });
 }
 
+module.exports.getUserById = function(id) {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * FROM `Users` where `userId` = ?', [id],(err, results) => {
+            if (err) {
+                reject('couldnt get users');
+            }
+            else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10).then((hash) => {
