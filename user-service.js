@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const mailService = require('./mail-service.js');
 
 // Import user model
 const UserModel = require('./models/User.js');
@@ -33,8 +34,21 @@ module.exports.registerUser = function(userData) {
                     lastName: userData.lastName,
                     verificationHash: randomHash
                 })
-                    .then(() => {
-                        resolve('User ' + userData.userName + ' successfully registered');
+                    .then((createdUser) => {
+                        let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
+                            '\/' + createdUser.verificationHash;
+                        let mailText = 'Hello ' + createdUser.firstName + ' Thank you for registering with Canpolls. ' +
+                            'Please click the link below to verify your account.\n' + mailLink;
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: createdUser.email,
+                            subject: 'PRJ666 Canpolls Acount Verification',
+                            text: mailText
+                        };
+                        mailService.sendEmail(mailData)
+                            .then(() => resolve('User ' + userData.userName + ' successfully registered'))
+                            .catch((msg) => reject('Error sending verification email'));
+                        
                     })
                     .catch((err) => {
                         reject('Couldnt register user');
@@ -115,7 +129,7 @@ module.exports.checkUser = function (userData) {
             .then((foundUser) => {
                 if (foundUser) {
                     if (!foundUser.isVerified)
-                        return reject('You need to verify your account before loggin in. Check your email for the link.')
+                        return reject('You need to verify your account before you can log in. Check your email for the link.')
                     bcrypt.compare(userData.password, foundUser.password)
                         .then((match) => {
                             if (match)
