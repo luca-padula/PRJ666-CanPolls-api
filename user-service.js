@@ -37,7 +37,7 @@ module.exports.registerUser = function(userData) {
                     .then((createdUser) => {
                         let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
                             '\/' + createdUser.verificationHash;
-                        let mailText = 'Hello ' + createdUser.firstName + ' Thank you for registering with Canpolls. ' +
+                        let mailText = 'Hello ' + createdUser.firstName + ',\nthank you for registering with Canpolls. ' +
                             'Please click the link below to verify your account.\n' + mailLink;
                         let mailData = {
                             from: mailService.appFromEmailAddress,
