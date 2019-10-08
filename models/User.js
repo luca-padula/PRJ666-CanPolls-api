@@ -1,7 +1,7 @@
 /*
 Model file for database table
 */
-
+import {Event} from './Event';
 // Require sequelize and our database instance
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
@@ -49,7 +49,7 @@ var User = database.define('User', {
 // Can use sequelize to specify relationships between tables
 //  i.e. could import a model called Events and do:
 
-// User.hasMany(Event); - automatically creates foreign keys
+ User.hasMany(Event); //- automatically creates foreign keys
 
 // see https://web322.ca/notes/week07 for more details
 
