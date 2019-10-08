@@ -134,6 +134,12 @@ app.post('/api/forgotPassword', [
         .catch((msg) => res.status(500).json({ "message": msg }));
 });
 
+app.post('api/resetPassword/:userId/:token', [
+
+], (req, res) => {
+
+});
+
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');

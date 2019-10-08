@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const mailService = require('./mail-service.js');
 
 // Import user model
@@ -193,13 +194,31 @@ module.exports.sendPasswordResetEmail = function(email) {
         this.findUserByEmail(email)
             .then((foundUser) => {
                 if (foundUser) {
-                    let mailText = 'Hey';
+
+                    // Set up JWT token that is valid for 1 hour
+                    let payload = {
+                        userId: foundUser.userId,
+                        userName: foundUser.userName,
+                        email: foundUser.email
+                    };
+                    let secret = foundUser.password + '-' + foundUser.createdAt;
+                    let token = jwt.sign(payload, secret, {
+                        expiresIn: 60 * 60
+                    });
+
+                    // Set up nodeMailer email configuration
+                    let mailLink = mailService.appUrl + '\/resetPassword\/' + foundUser.userId +
+                        '\/' + token;
+                    let mailText = 'Hello ' + foundUser.firstName + ',\nAs per your request,' +
+                        'your password reset link is available below.\n' + mailLink + '\n' +
+                        'This reset link will be valid for 1 hour, after which you will need to request another link';
                     let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: foundUser.email,
                         subject: 'PRJ666 CanPolls Password Reset',
                         text: mailText
                     };
+
                     mailService.sendEmail(mailData)
                         .then(() => {
                             resolve();
@@ -214,7 +233,14 @@ module.exports.sendPasswordResetEmail = function(email) {
                 }
             })
             .catch((msg) => {
+                console.log(msg);
                 reject('Error finding user');
             });
+    });
+}
+
+module.exports.resetPassword = function(passwordData) {
+    return new Promise((resolve, reject) => {
+        
     });
 }
