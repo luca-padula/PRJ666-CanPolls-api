@@ -1,4 +1,6 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const mailService = require('./mail-service.js');
 
 // Import user model
 const UserModel = require('./models/User.js');
@@ -38,9 +40,8 @@ module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
             .then((hash) => {
-                let randomString = Math.random().toString(36).replace(/[^a-z]+/g, '');
-                console.log(randomString);
-                let randomHash = bcrypt.hashSync(randomString, 10);
+                let randomString = crypto.randomBytes(32).toString('hex');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace('\/', '');
                 User.create({
                     userName: userData.userName,
                     email: userData.email,
@@ -49,8 +50,21 @@ module.exports.registerUser = function(userData) {
                     lastName: userData.lastName,
                     verificationHash: randomHash
                 })
-                    .then(() => {
-                        resolve('User ' + userData.userName + ' successfully registered');
+                    .then((createdUser) => {
+                        let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
+                            '\/' + createdUser.verificationHash;
+                        let mailText = 'Hello ' + createdUser.firstName + ',\nthank you for registering with Canpolls. ' +
+                            'Please click the link below to verify your account.\n' + mailLink;
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: createdUser.email,
+                            subject: 'PRJ666 Canpolls Acount Verification',
+                            text: mailText
+                        };
+                        mailService.sendEmail(mailData)
+                            .then(() => resolve('User ' + userData.userName + ' successfully registered'))
+                            .catch((msg) => reject('Error sending verification email'));
+                        
                     })
                     .catch((err) => {
                         reject('Couldnt register user');
@@ -70,8 +84,8 @@ module.exports.verifyUser = function(userId, token) {
             }
         })
             .then((foundUser) => {
-                if (foundUser.isVerified || (token != foundUser.verificationHash)) {
-                    reject('Either you have the wrong link, or the user has already been verified');
+                if ( !foundUser || foundUser.isVerified || (token != foundUser.verificationHash)) {
+                    return reject('Either you have the wrong link, or the user has already been verified');
                 }
                 User.update({
                     isVerified: true
@@ -130,6 +144,8 @@ module.exports.checkUser = function (userData) {
         this.findUserByUsername(userData.userName)
             .then((foundUser) => {
                 if (foundUser) {
+                    if (!foundUser.isVerified)
+                        return reject('You need to verify your account before you can log in. Check your email for the link.')
                     bcrypt.compare(userData.password, foundUser.password)
                         .then((match) => {
                             if (match)
@@ -145,6 +161,8 @@ module.exports.checkUser = function (userData) {
                     this.findUserByEmail(userData.userName)
                         .then((foundUser) => {
                             if (foundUser) {
+                                if (!foundUser.isVerified)
+                                    return reject('You need to verify your account before you can log in. Check your email for the link.')
                                 bcrypt.compare(userData.password, foundUser.password)
                                     .then((match) => {
                                         if (match)

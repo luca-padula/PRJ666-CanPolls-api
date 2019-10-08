@@ -42,6 +42,7 @@ app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
         .isEmail().withMessage('Invalid email entered')
+        .bail()
         .custom((value) => {
             return userService.findUserByEmail(value).then((foundUser) => {
                 if (foundUser) {
@@ -57,6 +58,8 @@ app.post('/api/register', [
         .not().isEmpty().withMessage('Username cannot be empty')
         .isLength({ max: 30 }).withMessage('Username is too long')
         .not().matches(/@/).withMessage('Invalid character entered for Username')
+        .not().matches(/[ ]{2,}/).withMessage('Username cannot contain more than 1 consecutive whitespace')
+        .bail()
         .custom((value) => {
             return userService.findUserByUsername(value).then((foundUser) => {
                 if (foundUser) {
