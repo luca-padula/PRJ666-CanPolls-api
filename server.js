@@ -27,6 +27,15 @@ app.get('/api/users', (req, res) => {
     });
 });
 
+app.get('/api/users/:userId', (req, res) => {
+    userService.getUserById(req.params.userId).then((msg) => {
+        res.json({"message": msg});
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
