@@ -170,3 +170,34 @@ module.exports.checkUser = function (userData) {
             });
     });
 }
+
+module.exports.sendPasswordResetEmail = function(email) {
+    return new Promise((resolve, reject) => {
+        this.findUserByEmail(email)
+            .then((foundUser) => {
+                if (foundUser) {
+                    let mailText = 'Hey';
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: foundUser.email,
+                        subject: 'PRJ666 CanPolls Password Reset',
+                        text: mailText
+                    };
+                    mailService.sendEmail(mailData)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch((msg) => {
+                            console.log(msg);
+                            reject('Error sending email');
+                        });
+                }
+                else {
+                    resolve();
+                }
+            })
+            .catch((msg) => {
+                reject('Error finding user');
+            });
+    });
+}

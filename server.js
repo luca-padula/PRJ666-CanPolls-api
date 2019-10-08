@@ -111,6 +111,20 @@ app.post('/api/login', (req, res) => {
         });
 });
 
+app.post('/api/forgotPassword', [
+    check('email')
+        .isEmail().withMessage('Invalid email entered')
+], (req, res) => {
+    console.log('email: ' + req.body.email);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ "message": errors.array()[0].msg });
+    }
+    userService.sendPasswordResetEmail(req.body.email)
+        .then(() => res.json({ "message": "Password reset email successfully sent if user was found" }))
+        .catch((msg) => res.status(500).json({ "message": msg }));
+});
+
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');
