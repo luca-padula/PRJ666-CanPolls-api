@@ -20,6 +20,23 @@ module.exports.getAllUsers = function() {
     });
 }
 
+module.exports.getUserById = function(uId) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: uId
+            }
+        })
+        .then((user) => {
+            resolve(user);
+        })
+        .catch((err) => {
+            reject('An error occured');
+        })
+    });
+}
+
+
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
