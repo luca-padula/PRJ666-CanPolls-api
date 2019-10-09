@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const mailService = require('./mail-service.js');
 
 // Import user model
@@ -20,6 +21,23 @@ module.exports.getAllUsers = function() {
     });
 }
 
+module.exports.getUserById = function(uId) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: uId
+            }
+        })
+        .then((user) => {
+            resolve(user);
+        })
+        .catch((err) => {
+            reject('An error occured');
+        })
+    });
+}
+
+
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
@@ -37,7 +55,7 @@ module.exports.registerUser = function(userData) {
                     .then((createdUser) => {
                         let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
                             '\/' + createdUser.verificationHash;
-                        let mailText = 'Hello ' + createdUser.firstName + ' Thank you for registering with Canpolls. ' +
+                        let mailText = 'Hello ' + createdUser.firstName + ',\nthank you for registering with Canpolls. ' +
                             'Please click the link below to verify your account.\n' + mailLink;
                         let mailData = {
                             from: mailService.appFromEmailAddress,
@@ -168,5 +186,61 @@ module.exports.checkUser = function (userData) {
                 console.log(err);
                 reject('An error occured');
             });
+    });
+}
+
+module.exports.sendPasswordResetEmail = function(email) {
+    return new Promise((resolve, reject) => {
+        this.findUserByEmail(email)
+            .then((foundUser) => {
+                if (foundUser) {
+
+                    // Set up JWT token that is valid for 1 hour
+                    let payload = {
+                        userId: foundUser.userId,
+                        userName: foundUser.userName,
+                        email: foundUser.email
+                    };
+                    let secret = foundUser.password + '-' + foundUser.createdAt;
+                    let token = jwt.sign(payload, secret, {
+                        expiresIn: 60 * 60
+                    });
+
+                    // Set up nodeMailer email configuration
+                    let mailLink = mailService.appUrl + '\/resetPassword\/' + foundUser.userId +
+                        '\/' + token;
+                    let mailText = 'Hello ' + foundUser.firstName + ',\nAs per your request,' +
+                        'your password reset link is available below.\n' + mailLink + '\n' +
+                        'This reset link will be valid for 1 hour, after which you will need to request another link';
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: foundUser.email,
+                        subject: 'PRJ666 CanPolls Password Reset',
+                        text: mailText
+                    };
+
+                    mailService.sendEmail(mailData)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch((msg) => {
+                            console.log(msg);
+                            reject('Error sending email');
+                        });
+                }
+                else {
+                    resolve();
+                }
+            })
+            .catch((msg) => {
+                console.log(msg);
+                reject('Error finding user');
+            });
+    });
+}
+
+module.exports.resetPassword = function(passwordData) {
+    return new Promise((resolve, reject) => {
+        
     });
 }

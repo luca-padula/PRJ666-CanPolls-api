@@ -27,6 +27,15 @@ app.get('/api/users', (req, res) => {
     });
 });
 
+app.get('/api/users/:userId', (req, res) => {
+    userService.getUserById(req.params.userId).then((msg) => {
+        res.json({"message": msg});
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
@@ -109,6 +118,26 @@ app.post('/api/login', (req, res) => {
         .catch((msg) => {
             res.status(422).json({ "message": msg });
         });
+});
+
+app.post('/api/forgotPassword', [
+    check('email')
+        .isEmail().withMessage('Invalid email entered')
+], (req, res) => {
+    console.log('email: ' + req.body.email);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ "message": errors.array()[0].msg });
+    }
+    userService.sendPasswordResetEmail(req.body.email)
+        .then(() => res.json({ "message": "Password reset email successfully sent if user was found" }))
+        .catch((msg) => res.status(500).json({ "message": msg }));
+});
+
+app.post('api/resetPassword/:userId/:token', [
+
+], (req, res) => {
+
 });
 
 // catch-all 404 route

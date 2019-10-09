@@ -11,7 +11,9 @@ let transporter = nodeMailer.createTransport({
 });
 
 module.exports.appUrl = 'http://localhost:4200';
+
 module.exports.appFromEmailAddress = 'prj666_193a03@myseneca.ca';
+
 module.exports.sendEmail = function(data) {
     return new Promise((resolve, reject) => {
         transporter.sendMail(data, (err, info) => {
