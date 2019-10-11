@@ -30,19 +30,33 @@ var User = database.define('User', {
         type: Sequelize.STRING(80),
         allowNull: false
     },
-    firstName: Sequelize.STRING(50),
-    lastName: Sequelize.STRING(50),
+    firstName: {
+        type: Sequelize.STRING(50),
+        allowNull: false
+    },
+    lastName: {
+        type: Sequelize.STRING(50),
+        allowNull: false
+    },
     isVerified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+        allowNull: false
     },
     verificationHash: {
         type: Sequelize.STRING(80),
         allowNull: false
     },
+    partyAffiliation: Sequelize.STRING(50),
+    affiliationApproved: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
     rejectionCount: {
         type: Sequelize.INTEGER,
-        defaultValue: 0
+        defaultValue: 0,
+        allowNull: false
     }
 });
 

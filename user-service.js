@@ -42,16 +42,11 @@ module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
             .then((hash) => {
+                userData.password = hash;
                 let randomString = crypto.randomBytes(32).toString('hex');
                 let randomHash = bcrypt.hashSync(randomString, 10).replace('\/', '');
-                User.create({
-                    userName: userData.userName,
-                    email: userData.email,
-                    password: hash,
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    verificationHash: randomHash
-                })
+                userData.verificationHash = randomHash;
+                User.create(userData)
                     .then((createdUser) => {
                         let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
                             '\/' + createdUser.verificationHash;
@@ -211,7 +206,8 @@ module.exports.sendPasswordResetEmail = function(email) {
                         '\/' + token;
                     let mailText = 'Hello ' + foundUser.firstName + ',\nAs per your request, ' +
                         'your password reset link is available below.\n' + mailLink + '\n' +
-                        'This reset link will be valid for 1 hour, after which you will need to request another link';
+                        'This reset link will be valid for 1 hour, after which you will need to request another link.\n' +
+                        'This link can only be used to reset your password once.';
                     let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: foundUser.email,
