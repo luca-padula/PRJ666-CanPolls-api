@@ -1,4 +1,4 @@
-import {Event} from './Event';
+
 
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
@@ -33,6 +33,6 @@ var Location = database.define('Location', {
     }
 });
 
-Location.hasMany(Event);
+
 
 module.exports = {Location};

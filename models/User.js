@@ -1,7 +1,8 @@
 /*
 Model file for database table
 */
-import {Event} from './Event';
+const EventModel = require('./Event.js');
+let Event = EventModel.Event;
 // Require sequelize and our database instance
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
