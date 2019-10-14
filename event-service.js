@@ -32,7 +32,7 @@ module.exports.getEventById = function(eId){
     });
 }
 
-module.exports.submitEvent = function(eventData){
+module.exports.createEvent = function(eventData){
     return new Promise((resolve, reject)=>{
         Event.create(eventData)
             .then((createdEvent)=>{
