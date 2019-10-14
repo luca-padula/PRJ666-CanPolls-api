@@ -124,7 +124,6 @@ app.post('/api/forgotPassword', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
 ], (req, res) => {
-    console.log('email: ' + req.body.email);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ "message": errors.array()[0].msg });
@@ -134,10 +133,30 @@ app.post('/api/forgotPassword', [
         .catch((msg) => res.status(500).json({ "message": msg }));
 });
 
-app.post('api/resetPassword/:userId/:token', [
-
+app.post('/api/resetPassword/:userId/:token', [
+    check('password')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
+    check('password2').custom((value, {req}) => {
+        if (value !== req.body.password) {
+            throw new Error('Passwords do not match');
+        }
+        return true;
+    })
 ], (req, res) => {
-
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ "validationErrors": errors.array() });
+    }
+    userService.resetPassword(req.params.userId, req.params.token, req.body)
+        .then((successMessage) => {
+            res.json({ "message": successMessage });
+        })
+        .catch((errMessage) => {
+            res.status(422).json({ "message": errMessage })
+        });
 });
 
 // catch-all 404 route

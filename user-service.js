@@ -42,16 +42,11 @@ module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
             .then((hash) => {
+                userData.password = hash;
                 let randomString = crypto.randomBytes(32).toString('hex');
                 let randomHash = bcrypt.hashSync(randomString, 10).replace('\/', '');
-                User.create({
-                    userName: userData.userName,
-                    email: userData.email,
-                    password: hash,
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    verificationHash: randomHash
-                })
+                userData.verificationHash = randomHash;
+                User.create(userData)
                     .then((createdUser) => {
                         let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
                             '\/' + createdUser.verificationHash;
@@ -209,9 +204,10 @@ module.exports.sendPasswordResetEmail = function(email) {
                     // Set up nodeMailer email configuration
                     let mailLink = mailService.appUrl + '\/resetPassword\/' + foundUser.userId +
                         '\/' + token;
-                    let mailText = 'Hello ' + foundUser.firstName + ',\nAs per your request,' +
+                    let mailText = 'Hello ' + foundUser.firstName + ',\nAs per your request, ' +
                         'your password reset link is available below.\n' + mailLink + '\n' +
-                        'This reset link will be valid for 1 hour, after which you will need to request another link';
+                        'This reset link will be valid for 1 hour, after which you will need to request another link.\n' +
+                        'This link can only be used to reset your password once.';
                     let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: foundUser.email,
@@ -239,8 +235,42 @@ module.exports.sendPasswordResetEmail = function(email) {
     });
 }
 
-module.exports.resetPassword = function(passwordData) {
+module.exports.resetPassword = function(id, token, passwordData) {
     return new Promise((resolve, reject) => {
-        
+        User.findOne({
+            where: {
+                userId: id
+            }
+        })
+            .then((foundUser) => {
+                if (!foundUser) {
+                    return reject('Link id is wrong');
+                }
+                const secret = foundUser.password + '-' + foundUser.createdAt;
+                return jwt.verify(token, secret);
+            })
+            .then((payload) => {
+                if (payload.userId != id) {
+                    console.log('bad token');
+                    return reject('bad token');
+                }
+                return bcrypt.hashSync(passwordData.password, 10);
+            })
+            .then((hash) => {
+                console.log(hash);
+                return User.update({
+                    password: hash
+                }, {
+                    where: { userId: id }
+                });
+            })
+            .then((updatedUser) => {
+                console.log('password updated!');
+                resolve('password updated!');
+            })
+            .catch((err) => {
+                console.log(err.message);
+                reject(err.message);
+            })
     });
 }
