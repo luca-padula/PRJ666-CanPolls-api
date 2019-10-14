@@ -34,16 +34,25 @@ module.exports.getEventById = function(eId){
 
 module.exports.submitEvent = function(eventData){
     return new Promise((resolve, reject)=>{
-        Event.create({
-            event_title: eventData.event_title,
-            event_description: eventData.event_description,
-            date_from: eventData.date_from,
-            date_to: eventData.date_to,
-            time_from: eventData.time_from,
-            time_to: eventData.time_to,
-            location: Location.create({
-                
+        Event.create(eventData)
+            .then((createdEvent)=>{
+                let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdEvent.event_id;
+                let mailText = 'Hello Admin,\nThere is new event just created. Here is the information: ' +
+                    '\n Event Title: ' + createdEvent.event_title +
+                    '\n Event Description: ' + createdEvent.event_description +
+                    '\n Click here to approve the event. \n' + mailLink;
+                let mailData = {
+                    from: mailService.appFromEmailAddress,
+                    to: 'amhnguyen@myseneca.ca',
+                    subject: 'PRJ666 CanPolls Event Verification',
+                    text: mailText
+                };
+                mailService.sendEmail(mailData)
+                        .then(()=>resolve('Event ' + eventData.event_id + ' successfully submitted'))
+                        .catch((msg) => reject('Error sending verification email'));
             })
-        })
-    })
+            .catch((err) =>{
+                reject('Couldnt submit event');
+            })
+        });
 }

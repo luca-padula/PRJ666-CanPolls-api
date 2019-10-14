@@ -6,6 +6,7 @@ const passport = require('passport');
 const { check, validationResult } = require('express-validator');
 const database = require('./database.js')
 const userService = require('./user-service.js');
+const eventService = require('./event-service.js');
 const passportConfig = require('./config/passportConfig.js');
 const jwtConfig = require('./config/jwtConfig.js');
 
@@ -156,6 +157,25 @@ app.post('/api/resetPassword/:userId/:token', [
         })
         .catch((errMessage) => {
             res.status(422).json({ "message": errMessage })
+        });
+});
+
+app.post('/api/creatEvent',[
+    check('event_title')
+        .trim()
+        .not().isEmpty().withMessage('Event title cannot be empty')
+        .isLength({max: 50}).withMessage('Event title is too long')
+], (req, res) =>{
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
+    eventService.submitEvent(req.body)
+        .then((msg)=>{
+            res.json({"message":msg});
+        })
+        .catch((msg)=>{
+            res.status(422).json({"message": msg});
         });
 });
 
