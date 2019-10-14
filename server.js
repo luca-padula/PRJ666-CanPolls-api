@@ -160,6 +160,9 @@ app.post('/api/resetPassword/:userId/:token', [
         });
 });
 
+
+// Event routes
+
 app.post('/api/creatEvent',[
     check('event_title')
         .trim()
@@ -178,6 +181,27 @@ app.post('/api/creatEvent',[
             res.status(422).json({"message": msg});
         });
 });
+
+app.get('/api/event/:eventId', (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((event) => {
+            res.json({ "event": event });
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
+app.get('/api/event/:eventId/registeredUsers', (req, res) => {
+    eventService.getRegisteredUsersByEventId(req.params.eventId)
+        .then((registeredUsers) => {
+            res.json({ "users": registeredUsers });
+        })
+        .catch((err) => {
+            res.status(403).json({ "message": err });
+        });
+})
+
 
 // catch-all 404 route
 app.use((req, res) => {

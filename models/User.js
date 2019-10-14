@@ -1,11 +1,14 @@
 /*
 Model file for database table
 */
-const EventModel = require('./Event.js');
-let Event = EventModel.Event;
 // Require sequelize and our database instance
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
+const EventModel = require('./Event.js');
+const EventRegistrationModel = require('./EventRegistration.js');
+
+let Event = EventModel.Event;
+let EventRegistration = EventRegistrationModel.EventRegistration;
 
 // Get the instance of our database
 let database = databaseWrapper.getDatabase();
@@ -65,6 +68,7 @@ var User = database.define('User', {
 //  i.e. could import a model called Events and do:
 
  User.hasMany(Event); //- automatically creates foreign keys
+ User.hasMany(EventRegistration);
 
 // see https://web322.ca/notes/week07 for more details
 

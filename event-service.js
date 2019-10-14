@@ -1,10 +1,17 @@
 const jwt = require('jsonwebtoken');
+const Sequelize = require('sequelize');
 const mailService = require('./mail-service.js');
+
+const Op = Sequelize.Op;
 
 const EventModel = require('./models/Event.js');
 let Event = EventModel.Event;
 const LocationModel = require('./models/Location.js');
 let Location = LocationModel.Location;
+const EventRegistrationModel = require('./models/EventRegistration.js');
+let EventRegistration = EventRegistrationModel.EventRegistration;
+const UserModel = require('./models/User.js');
+let User = UserModel.User;
 
 module.exports.getAllEvents = function(){
     return new Promise((resolve, reject) =>{
@@ -23,10 +30,11 @@ module.exports.getEventById = function(eId){
         Event.findOne({
             where:{event_id: eId}
         })
-        .then((event)=>{
+        .then((event) => {
             resolve(event);
         })
-        .catch((err) =>{
+        .catch((err) => {
+            console.log(err.message);
             reject('An error occured');
         })
     });
@@ -55,4 +63,35 @@ module.exports.submitEvent = function(eventData){
                 reject('Couldnt submit event');
             })
         });
+}
+
+module.exports.getRegisteredUsersByEventId = function(eId) {
+    return new Promise((resolve, reject) => {
+        let foundUserIds = [];
+        EventRegistration.findAll({
+            attributes: ['UserUserId'],
+            where: {
+                EventEventId: eId
+            }
+        })
+            .then((p_foundUserIds) => {
+                for (var i = 0; i < p_foundUserIds.length; i++) {
+                    foundUserIds.push(p_foundUserIds[i].UserUserId);
+                }
+                return User.findAll({
+                    where: {
+                        userId: {
+                            [Op.in]: foundUserIds
+                        }
+                    }
+                });
+            })
+            .then((registeredUsers) => {
+                resolve(registeredUsers);
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('error getting registered users');
+            });
+    });
 }

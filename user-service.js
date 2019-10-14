@@ -37,7 +37,6 @@ module.exports.getUserById = function(uId) {
     });
 }
 
-
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
