@@ -65,18 +65,33 @@ module.exports.submitEvent = function(eventData){
         });
 }
 
+module.exports.updateEventById = function(eId, eventData) {
+    return new Promise((resolve, reject) => {
+        Event.update(eventData, {
+            where: {
+                event_id: eId
+            }
+        })
+            .then(() => resolve('Event ' + eId + ' successfully updated'))
+            .catch((err) => {
+                console.log(err);
+                reject('Error updating event');
+            });
+    });
+}
+
 module.exports.getRegisteredUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
-        let foundUserIds = [];
         EventRegistration.findAll({
             attributes: ['UserUserId'],
             where: {
                 EventEventId: eId
             }
         })
-            .then((p_foundUserIds) => {
-                for (var i = 0; i < p_foundUserIds.length; i++) {
-                    foundUserIds.push(p_foundUserIds[i].UserUserId);
+            .then((resultIds) => {
+                let foundUserIds = [];
+                for (var i = 0; i < resultIds.length; i++) {
+                    foundUserIds.push(resultIds[i].UserUserId);
                 }
                 return User.findAll({
                     where: {
@@ -92,6 +107,39 @@ module.exports.getRegisteredUsersByEventId = function(eId) {
             .catch((err) => {
                 console.log(err);
                 reject('error getting registered users');
+            });
+    });
+}
+
+module.exports.removeUserFromEvent = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.update({
+            status: 'removed'
+        }, {
+            where: {
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+            }
+        })
+            .then(() => {
+                return User.findOne({
+                    where: { userId: userId }
+                });
+            })
+            .then((foundUser) => {
+                let mailText = 'Hello, ' + foundUser.firstName + '\n' +
+                'The administrator of event ' + eventId + ' has chosen to remove you from the event registration';
+                let mailData = {
+                    from: mailService.appFromEmailAddress,
+                    to: foundUser.email,
+                    subject: 'CanPolls Event ' + eventId,
+                    text: mailText
+                };
+                return mailService.sendEmail(mailData);
+            })
+            .then(() => resolve('User successfully removed from event registration'))
+            .catch((err) => {
+                console.log(err);
+                reject('Error removing user');
             });
     });
 }

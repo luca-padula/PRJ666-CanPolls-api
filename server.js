@@ -192,15 +192,35 @@ app.get('/api/event/:eventId', (req, res) => {
         });
 });
 
+app.put('/api/event/:eventId', (req, res) => {
+    eventService.updateEventById(req.params.eventId, req.body)
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
 app.get('/api/event/:eventId/registeredUsers', (req, res) => {
     eventService.getRegisteredUsersByEventId(req.params.eventId)
         .then((registeredUsers) => {
             res.json({ "users": registeredUsers });
         })
         .catch((err) => {
-            res.status(403).json({ "message": err });
+            res.status(500).json({ "message": err });
         });
-})
+});
+
+app.delete('/api/event/:eventId/user/:userId', (req, res) => {
+    eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
 
 
 // catch-all 404 route
@@ -214,4 +234,4 @@ database.initializeDatabase().then(() => {
 })
 .catch((err) => {
     console.log('Unable to start the server: ', err);
-})
+});
