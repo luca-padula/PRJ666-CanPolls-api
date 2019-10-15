@@ -65,11 +65,11 @@ module.exports.submitEvent = function(eventData){
         });
 }
 
-module.exports.updateEventById = function(eId, eventData) {
+module.exports.updateEventById = function(eId, uId, eventData) {
     return new Promise((resolve, reject) => {
         Event.update(eventData, {
             where: {
-                event_id: eId
+                [Op.and]: [{event_id: eId}, {UserUserId: uId}]
             }
         })
             .then(() => resolve('Event ' + eId + ' successfully updated'))
@@ -120,12 +120,20 @@ module.exports.removeUserFromEvent = function(eventId, userId) {
                 [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
             }
         })
-            .then(() => {
-                return User.findOne({
-                    where: { userId: userId }
-                });
+            .then((updatedRegistrations) => {
+                if (updatedRegistrations[0] == 0) {
+                    return reject('No such registration');
+                }
+                else {
+                    return User.findOne({
+                        where: { userId: userId }
+                    });
+                }
             })
             .then((foundUser) => {
+                if (!foundUser) {
+                    return reject("Invalid user");
+                }
                 let mailText = 'Hello, ' + foundUser.firstName + '\n' +
                 'The administrator of event ' + eventId + ' has chosen to remove you from the event registration';
                 let mailData = {

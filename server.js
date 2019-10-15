@@ -192,8 +192,16 @@ app.get('/api/event/:eventId', (req, res) => {
         });
 });
 
-app.put('/api/event/:eventId', (req, res) => {
-    eventService.updateEventById(req.params.eventId, req.body)
+app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to edit this event');
+            }
+            else {
+                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body)
+            }
+        })
         .then((msg) => {
             res.json({ "message": msg });
         })
@@ -202,8 +210,16 @@ app.put('/api/event/:eventId', (req, res) => {
         });
 });
 
-app.get('/api/event/:eventId/registeredUsers', (req, res) => {
-    eventService.getRegisteredUsersByEventId(req.params.eventId)
+app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to view this info');
+            }
+            else {
+                return eventService.getRegisteredUsersByEventId(req.params.eventId)
+            }
+        })
         .then((registeredUsers) => {
             res.json({ "users": registeredUsers });
         })
@@ -212,8 +228,16 @@ app.get('/api/event/:eventId/registeredUsers', (req, res) => {
         });
 });
 
-app.delete('/api/event/:eventId/user/:userId', (req, res) => {
-    eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to do this');
+            }
+            else {
+                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+            }
+        })
         .then((msg) => {
             res.json({ "message": msg });
         })
