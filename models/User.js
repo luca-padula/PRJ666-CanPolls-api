@@ -1,10 +1,14 @@
 /*
 Model file for database table
 */
-
 // Require sequelize and our database instance
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
+const EventModel = require('./Event.js');
+const EventRegistrationModel = require('./EventRegistration.js');
+
+let Event = EventModel.Event;
+let EventRegistration = EventRegistrationModel.EventRegistration;
 
 // Get the instance of our database
 let database = databaseWrapper.getDatabase();
@@ -30,26 +34,41 @@ var User = database.define('User', {
         type: Sequelize.STRING(80),
         allowNull: false
     },
-    firstName: Sequelize.STRING(50),
-    lastName: Sequelize.STRING(50),
+    firstName: {
+        type: Sequelize.STRING(50),
+        allowNull: false
+    },
+    lastName: {
+        type: Sequelize.STRING(50),
+        allowNull: false
+    },
     isVerified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+        allowNull: false
     },
     verificationHash: {
         type: Sequelize.STRING(80),
         allowNull: false
     },
+    partyAffiliation: Sequelize.STRING(50),
+    affiliationApproved: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
     rejectionCount: {
         type: Sequelize.INTEGER,
-        defaultValue: 0
+        defaultValue: 0,
+        allowNull: false
     }
 });
 
 // Can use sequelize to specify relationships between tables
 //  i.e. could import a model called Events and do:
 
-// User.hasMany(Event); - automatically creates foreign keys
+ User.hasMany(Event); //- automatically creates foreign keys
+ User.hasMany(EventRegistration);
 
 // see https://web322.ca/notes/week07 for more details
 
