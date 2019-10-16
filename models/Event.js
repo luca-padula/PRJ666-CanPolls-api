@@ -1,7 +1,10 @@
-const LocationModel = require('./Location.js');
-let Location = LocationModel.Location;
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
+const LocationModel = require('./Location.js');
+const EventRegistrationModel = require('./EventRegistration.js');
+
+let Location = LocationModel.Location;
+let EventRegistration = EventRegistrationModel.EventRegistration;
 
 let database = databaseWrapper.getDatabase();
 
@@ -37,4 +40,6 @@ var Event = database.define('Event', {
     }
 });
 Event.hasOne(Location);
+Event.hasMany(EventRegistration);
+
 module.exports = {Event};

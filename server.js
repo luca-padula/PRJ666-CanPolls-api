@@ -30,7 +30,7 @@ app.get('/api/users', (req, res) => {
 
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
-        res.json({"message": msg});
+        res.json(msg);
     })
     .catch((msg) => {
         res.status(422).json({"message": msg});
@@ -160,7 +160,10 @@ app.post('/api/resetPassword/:userId/:token', [
         });
 });
 
-app.post('/api/createEvent',[
+
+// Event routes
+
+app.post('/api/creatEvent',[
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
@@ -179,6 +182,71 @@ app.post('/api/createEvent',[
         });
 });
 
+app.get('/api/event/:eventId', (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((event) => {
+            res.json({ "event": event });
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
+app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to edit this event');
+            }
+            else {
+                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body)
+            }
+        })
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to view this info');
+            }
+            else {
+                return eventService.getRegisteredUsersByEventId(req.params.eventId)
+            }
+        })
+        .then((registeredUsers) => {
+            res.json({ "users": registeredUsers });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to do this');
+            }
+            else {
+                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+            }
+        })
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');
@@ -190,4 +258,4 @@ database.initializeDatabase().then(() => {
 })
 .catch((err) => {
     console.log('Unable to start the server: ', err);
-})
+});

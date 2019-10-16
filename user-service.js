@@ -36,8 +36,38 @@ module.exports.getUserById = function(uId) {
         })
     });
 }
-
-
+/*
+module.exports.updateUserInfo = function(userId, token) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: userId
+            }
+        })
+            .then((foundUser) => {
+                if ( !foundUser || foundUser.isVerified || (token != foundUser.verificationHash)) {
+                    return reject('');
+                }
+                User.update({
+                    isVerified: true
+                }, {
+                    where: { userId: foundUser.userId }
+                })
+                    .then(() => {
+                        resolve('User ' + foundUser.userName + ' successfully updated');
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        reject('Error updating user');
+                    });
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
+    });
+}
+*/
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
