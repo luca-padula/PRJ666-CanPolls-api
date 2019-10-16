@@ -170,7 +170,7 @@ app.post('/api/createEvent',[
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }
-    eventService.submitEvent(req.body)
+    eventService.createEvent(req.body)
         .then((msg)=>{
             res.json({"message":msg});
         })
