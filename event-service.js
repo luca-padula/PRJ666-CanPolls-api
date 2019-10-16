@@ -42,6 +42,7 @@ module.exports.getEventById = function(eId){
 
 module.exports.createEvent = function(eventData){
     return new Promise((resolve, reject)=>{
+        console.log(eventData.event_title);
         Event.create({
             event_title: eventData.event_title,
             event_description: eventData.event_description,
