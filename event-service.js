@@ -51,7 +51,8 @@ module.exports.createEvent = function(eventData){
             time_from: eventData.time_from,
             time_to: eventData.time_to,
             attendee_limit: eventData.attendee_limit,
-
+            isApproved: false,
+            
         }), 
         Location.create({
             venue_name: eventData.venue_name,

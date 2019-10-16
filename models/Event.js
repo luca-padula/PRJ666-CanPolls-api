@@ -41,6 +41,10 @@ var Event = database.define('Event', {
     attendee_limit:{
         type:Sequelize.INTEGER,
         allowNull:false
+    },
+    isApproved:{
+        type:Sequelize.BOOLEAN,
+        allowNull:false
     }
 });
 Event.hasOne(Location);
