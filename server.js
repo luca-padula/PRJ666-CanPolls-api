@@ -163,7 +163,7 @@ app.post('/api/resetPassword/:userId/:token', [
 
 // Event routes
 
-app.post('/api/creatEvent',[
+app.post('/api/createEvent',[
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
