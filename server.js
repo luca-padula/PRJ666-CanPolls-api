@@ -28,26 +28,15 @@ app.get('/api/users',  (req, res) => {
     });
 });
 
-<<<<<<< HEAD
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
         res.json(msg);
-=======
-app.get('/api/users/:id', (req, res) => {
-    userService.getUserById(req.params['id']).then((msg) => {
-        res.render("message", msg);
-        console.log(res.json);
->>>>>>> bae2ede176f3d9e8d74c5f75aafd59dced46a7b9
     })
     .catch((msg) => {
         res.status(422).json({"message": msg});
     });
 });
 
-<<<<<<< HEAD
-=======
-
->>>>>>> bae2ede176f3d9e8d74c5f75aafd59dced46a7b9
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
