@@ -16,10 +16,10 @@ var app = express();
 app.use(passport.initialize());
 app.use(cors());
 app.use(bodyParser.json());
-
+//passport.authenticate('jwt', {session: false}),
 // User routes
 // Example route to see protection of a route using JWT, will be removed
-app.get('/api/users', (req, res) => {
+app.get('/api/users',  (req, res) => {
     userService.getAllUsers().then((msg) => {
         res.json({"message": msg});
     })
@@ -28,15 +28,26 @@ app.get('/api/users', (req, res) => {
     });
 });
 
+<<<<<<< HEAD
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
         res.json(msg);
+=======
+app.get('/api/users/:id', (req, res) => {
+    userService.getUserById(req.params['id']).then((msg) => {
+        res.render("message", msg);
+        console.log(res.json);
+>>>>>>> bae2ede176f3d9e8d74c5f75aafd59dced46a7b9
     })
     .catch((msg) => {
         res.status(422).json({"message": msg});
     });
 });
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> bae2ede176f3d9e8d74c5f75aafd59dced46a7b9
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')

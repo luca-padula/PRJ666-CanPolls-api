@@ -68,6 +68,22 @@ module.exports.updateUserInfo = function(userId, token) {
     });
 }
 */
+module.exports.getUserById = function(id) {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * FROM `Users` where `userId` = ?', [id],(err, results) => {
+            if (err) {
+                reject('couldnt get users');
+                console.log("not rejected");
+            }
+            else {
+                resolve(results);
+                console.log(results);
+            }
+        });
+    });
+}
+
+
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
