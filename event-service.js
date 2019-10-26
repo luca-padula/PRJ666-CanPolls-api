@@ -40,9 +40,27 @@ module.exports.getEventById = function(eId){
     });
 }
 
-module.exports.submitEvent = function(eventData){
+module.exports.createEvent = function(eventData){
     return new Promise((resolve, reject)=>{
-        Event.create(eventData)
+        console.log(eventData.event_title);
+        Event.create({
+            event_title: eventData.event_title,
+            event_description: eventData.event_description,
+            date_from: eventData.date_from,
+            date_to: eventData.date_to,
+            time_from: eventData.time_from,
+            time_to: eventData.time_to,
+            attendee_limit: eventData.attendee_limit,
+            isApproved: false,
+            
+        }), 
+        Location.create({
+            venue_name: eventData.venue_name,
+            street_name: eventData.street_name,
+            city: eventData.city,
+            province: eventData.province,
+            postal_code: eventData.postal_code
+        })
             .then((createdEvent)=>{
                 let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdEvent.event_id;
                 let mailText = 'Hello Admin,\nThere is new event just created. Here is the information: ' +

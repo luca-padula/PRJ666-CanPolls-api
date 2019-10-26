@@ -163,7 +163,7 @@ app.post('/api/resetPassword/:userId/:token', [
 
 // Event routes
 
-app.post('/api/creatEvent',[
+app.post('/api/createEvent',[
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
@@ -173,7 +173,7 @@ app.post('/api/creatEvent',[
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }
-    eventService.submitEvent(req.body)
+    eventService.createEvent(req.body)
         .then((msg)=>{
             res.json({"message":msg});
         })
