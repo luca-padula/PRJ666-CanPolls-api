@@ -182,8 +182,8 @@ app.post('/api/createEvent',[
         });
 });
 
-app.get('/api/event/:eventId', (req, res) => {
-    eventService.getEventById(req.params.eventId)
+app.get('/api/event/:event_id', (req, res) => {
+    eventService.getEventById(req.params.event_id)
         .then((event) => {
             res.json({ "event": event });
         })
@@ -191,6 +191,10 @@ app.get('/api/event/:eventId', (req, res) => {
             res.status(422).json({ "message": err });
         });
 });
+
+app.post('/api/event/:event_id', (req, res)=>{
+    
+})
 
 app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
