@@ -37,6 +37,61 @@ app.get('/api/users/:userId', (req, res) => {
     });
 });
 
+app.get('/api/users/:userName', (req, res) => {
+    userService.findUserByUsername(req.params.userName).then((msg) => {
+        res.json(msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+app.post('/api/updateUser', [
+    check('email')
+        .isEmail().withMessage('Invalid email entered')
+        .bail()
+        .custom((value) => {
+            return userService.findUserByEmail(value).then((foundUser) => {
+                if (foundUser) {
+                    return Promise.reject('Email is already registered');
+                }
+            })
+            .catch((msg) => {
+                return Promise.reject(msg);
+            });
+        }),
+        check('userName')
+        .trim()
+        .not().isEmpty().withMessage('Username cannot be empty')
+        .isLength({ max: 30 }).withMessage('Username is too long')
+        .not().matches(/@/).withMessage('Invalid character entered for Username')
+        .not().matches(/[ ]{2,}/).withMessage('Username cannot contain more than 1 consecutive whitespace')
+        .bail()
+        .custom((value) => {
+            return userService.findUserByUsername(value).then((foundUser) => {
+                if (foundUser) {
+                    return Promise.reject('Username already taken');
+                }
+            })
+            .catch((msg) => {
+                return Promise.reject(msg);
+            });
+        })
+ ], (req, res) => {
+    // Fail the request if there are validation errors and return them
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ "validationErrors": errors.array() });
+    }
+    userService.registerUser(req.body)
+        .then((msg) => {
+            res.json({"message": msg});
+        })
+        .catch((msg) => {
+            res.status(422).json({"message": msg});
+        });
+});
+
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
