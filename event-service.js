@@ -12,8 +12,7 @@ const EventRegistrationModel = require('./models/EventRegistration.js');
 let EventRegistration = EventRegistrationModel.EventRegistration;
 const UserModel = require('./models/User.js');
 let User = UserModel.User;
-
-module.exports.getAllEvents = function(){
+Events = function(){
     return new Promise((resolve, reject) =>{
         Event.findAll({})
             .then((events)=>{
@@ -168,4 +167,66 @@ module.exports.removeUserFromEvent = function(eventId, userId) {
                 reject('Error removing user');
             });
     });
+}
+
+module.exports.approveEvent = function(event_id, data){
+    return new Promise((resolve,reject)=>{
+        Event.findOne( {
+            where: {
+                event_id: event_id
+            }
+        })
+        .then((event)=>{
+            if(!event){
+                return reject('Link id is wrong');
+            }
+            console.log(data.isApproved);
+            console.log(event.event_id);
+            Event.update({
+                isApproved: data.isApproved
+            }, {
+                where: {event_id: event_id}
+            });
+            console.log(event.isApproved);
+        
+            
+            
+            
+            User.findOne({
+                where:{userId: data.userId}
+            })
+            .then((foundUser)=>{
+                console.log(foundUser.userId);
+                if(event.isApproved){
+                    console.log(event.isApproved);
+                    
+                }
+                else{
+                    let mailText = 'Hello,\nThis is an email to reply to your event.'+
+                        '\nWe are sorry to inform that your event has been declined by our presentative.';
+                }
+                let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
+                let mailText = 'Hello,\nThis is an email to reply to your event.'+
+                    '\nCongratulation! Your event has been approved by our presentative.'+
+                    '\nHere is a link to your event.\n' + mailLink;
+                let mailData = {
+                    from: mailService.appFromEmailAddress,
+                    to: foundUser.email,
+                    subject: 'PRJ666 CanPolls Create Event',
+                    text: mailText
+                };
+                mailService.sendEmail(mailData)
+                    .then(()=>resolve('Event ' + event.event_title +'successfully updated'))
+                    .catch((msg)=> reject('Error sending respond create event email'));
+            })
+            .catch((err)=>{
+                reject('Counld not find user');
+            })
+
+        })
+        .catch((err)=>{
+            reject('Could not find event');
+        })
+        
+    })
 }

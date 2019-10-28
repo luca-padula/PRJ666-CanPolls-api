@@ -247,8 +247,20 @@ app.get('/api/event/:event_id', (req, res) => {
         });
 });
 
-app.post('/api/event/:event_id', (req, res)=>{
-    
+app.post('/api/event/:event_id', passport.authenticate('general', {session: false}), [ check('userId')
+.equals('27').withMessage('You are not authorized to approve this')
+], (req, res)=>{
+   const errors = validationResult(req);
+   if (!errors.isEmpty()) {
+    return res.status(422).json({ "validationErrors": errors.array() });
+    }
+    eventService.approveEvent(req.params.event_id, req.body)
+    .then((successMessage) => {
+        res.json({ "message": successMessage });
+    })
+    .catch((errMessage) => {
+        res.status(422).json({ "message": errMessage })
+    });
 })
 
 app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
