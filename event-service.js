@@ -52,7 +52,7 @@ module.exports.createEvent = function(eventData){
             time_to: eventData.time_to,
             attendee_limit: eventData.attendee_limit,
             isApproved: false,
-            
+            UserUserId: eventData.userId
         }), 
         Location.create({
             venue_name: eventData.venue_name,
@@ -61,11 +61,11 @@ module.exports.createEvent = function(eventData){
             province: eventData.province,
             postal_code: eventData.postal_code
         })
-            .then((createdEvent)=>{
-                let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdEvent.event_id;
+            .then((eventData)=>{
+                let mailLink = mailService.appUrl + '\/' + eventData.event_id;
                 let mailText = 'Hello Admin,\nThere is new event just created. Here is the information: ' +
-                    '\n Event Title: ' + createdEvent.event_title +
-                    '\n Event Description: ' + createdEvent.event_description +
+                    '\n Event Title: ' + eventData.event_title +
+                    '\n Event Description: ' + eventData.event_description +
                     '\n Click here to approve the event. \n' + mailLink;
                 let mailData = {
                     from: mailService.appFromEmailAddress,
