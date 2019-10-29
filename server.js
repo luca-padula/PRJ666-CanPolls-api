@@ -146,7 +146,7 @@ app.post('/api/register', [
             res.json({"message": msg});
         })
         .catch((msg) => {
-            res.status(422).json({"message": msg});
+            res.status(500).json({"message": msg});
         });
 });
 
@@ -172,7 +172,7 @@ app.post('/api/login', (req, res) => {
             res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
         })
         .catch((msg) => {
-            res.status(422).json({ "message": msg });
+            res.status(400).json({ "message": msg });
         });
 });
 
