@@ -240,7 +240,7 @@ app.post('/api/createEvent',[
 app.get('/api/event/:event_id', (req, res) => {
     eventService.getEventById(req.params.event_id)
         .then((event) => {
-            res.json({ "event": event });
+            res.json(event);
         })
         .catch((err) => {
             res.status(422).json({ "message": err });
@@ -292,7 +292,7 @@ app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', 
             }
         })
         .then((registeredUsers) => {
-            res.json({ "users": registeredUsers });
+            res.json(registeredUsers);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
