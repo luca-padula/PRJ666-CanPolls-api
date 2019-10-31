@@ -30,7 +30,10 @@ module.exports.getEventById = function(eId){
             where:{event_id: eId}
         })
         .then((event) => {
-            resolve(event);
+            if (event)
+                resolve(event);
+            else
+                reject('Event does not exist');
         })
         .catch((err) => {
             console.log(err.message);
@@ -89,7 +92,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
             }
         })
-            .then(() => resolve('Event ' + eId + ' successfully updated'))
+            .then(() => resolve('Event successfully updated'))
             .catch((err) => {
                 console.log(err);
                 reject('Error updating event');
