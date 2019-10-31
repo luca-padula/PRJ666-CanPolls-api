@@ -270,11 +270,57 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
                 return Promise.reject('You are not authorized to edit this event');
             }
             else {
-                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body)
+                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body);
             }
         })
         .then((msg) => {
             res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.get('/api/location/:eventId', (req, res) => {
+    eventService.getLocationByEventId(req.params.eventId)
+        .then((location) => {
+            res.json(location);
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.put('/api/location/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to edit this location');
+            }
+            else {
+                return eventService.updateLocationByEventId(req.params.eventId, req.body);
+            }
+        })
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.get('/api/event/:eventId/registrations', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to view this info');
+            }
+            else {
+                return eventService.getRegistrationsByEventId(req.params.eventId);
+            }
+        })
+        .then((registrations) => {
+            res.json(registrations);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });

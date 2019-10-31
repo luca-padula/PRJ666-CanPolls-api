@@ -100,6 +100,45 @@ module.exports.updateEventById = function(eId, uId, eventData) {
     });
 }
 
+module.exports.getLocationByEventId = function(eId) {
+    return new Promise((resolve, reject) => {
+        Location.findOne({
+            where: {EventEventId: eId}
+        })
+            .then((location) => resolve(location))
+            .catch((err) => {
+                console.log(err);
+                reject('Error getting location');
+            });
+    });
+}
+
+module.exports.updateLocationByEventId = function(eId, locationData) {
+    return new Promise((resolve, reject) => {
+        Location.update(locationData, {
+            where: {EventEventId: eId}
+        })
+            .then(() => resolve('Location successfully updated'))
+            .catch((err) => {
+                console.log(err);
+                reject('Error updating location');
+            });
+    });
+}
+
+module.exports.getRegistrationsByEventId = function(eId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findAll({
+            where: {EventEventId: eId}
+        })
+            .then((registrations) => resolve(registrations))
+            .catch((err) => {
+                console.log(err);
+                reject('Error getting registrations');
+            });
+    });
+}
+
 module.exports.getRegisteredUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAll({
