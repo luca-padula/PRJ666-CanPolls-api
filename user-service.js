@@ -37,7 +37,7 @@ module.exports.getUserById = function(uId) {
     });
 }
 
-module.exports.updateUserInfo = function(userId, token) {
+module.exports.updateUserInfo = function(userId, userData) {
     return new Promise((resolve, reject) => {
         User.findOne({
             where: {
@@ -45,12 +45,11 @@ module.exports.updateUserInfo = function(userId, token) {
             }
         })
             .then((foundUser) => {
-                if ( !foundUser || foundUser.isVerified || (token != foundUser.verificationHash)) {
-                    return reject('');
+                console.log(foundUser);
+                if ( !foundUser || !foundUser.isVerified) {
+                    return reject('failing in here');
                 }
-                User.update({
-                    isVerified: true
-                }, {
+                User.update(userData, {
                     where: { userId: foundUser.userId }
                 })
                     .then(() => {
