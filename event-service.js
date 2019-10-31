@@ -272,3 +272,18 @@ module.exports.approveEvent = function(event_id, data){
         
     })
 }
+
+module.exports.getAllEventsByUser = function(userId){
+    return new Promise((resolve, reject)=>{
+        Event.findAll({
+            where:{UserUserId: userId}
+        })
+        .then((event) => {
+            resolve(event);
+        })
+        .catch((err) => {
+            console.log(err.message);
+            reject('An error occured');
+        })
+    });
+}

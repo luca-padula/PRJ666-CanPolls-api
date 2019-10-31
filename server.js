@@ -46,20 +46,28 @@ app.get('/api/users/:userName', (req, res) => {
     });
 });
 
-app.post('/api/updateUser', [
+app.put('/api/updateUser/:userId', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
         .bail()
         .custom((value) => {
             return userService.findUserByEmail(value).then((foundUser) => {
-                if (foundUser) {
-                    return Promise.reject('Email is already registered');
+                if (foundUser && !foundUser.email) {
+                  return Promise.reject(foundUser.email+ ' Email is already registered');
                 }
             })
             .catch((msg) => {
                 return Promise.reject(msg);
             });
         }),
+        check('firstName')
+        .trim()//+*?^$()[/]{}]
+        .not().matches(/[^a-zA-Z]/).withMessage('Firstname cannot contain anything but digits!')
+        .bail(),
+        check('lastName')
+        .trim()//+*?^$()[/]{}]
+        .not().matches(/[^a-zA-Z]/).withMessage('Lastname cannot contain anything but digits!')
+        .bail(),
         check('userName')
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
@@ -69,8 +77,8 @@ app.post('/api/updateUser', [
         .bail()
         .custom((value) => {
             return userService.findUserByUsername(value).then((foundUser) => {
-                if (foundUser) {
-                    return Promise.reject('Username already taken');
+                if (foundUser && !foundUser.userName) {
+                  return Promise.reject('Username already taken');
                 }
             })
             .catch((msg) => {
@@ -83,8 +91,9 @@ app.post('/api/updateUser', [
     if (!errors.isEmpty()) {
         return res.status(422).json({ "validationErrors": errors.array() });
     }
-    userService.registerUser(req.body)
+    userService.updateUserInfo(req.params.userId, req.body)
         .then((msg) => {
+            console.log(msg);
             res.json({"message": msg});
         })
         .catch((msg) => {
@@ -344,6 +353,17 @@ app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', 
             res.status(500).json({ "message": err });
         });
 });
+
+app.get('/api/events/createdEvents/:userId', (req, res) => {
+    eventService.getAllEventsByUser(req.params.userId)
+        .then((event) => {
+            res.json(event);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
