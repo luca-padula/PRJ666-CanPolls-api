@@ -247,6 +247,15 @@ app.get('/api/event/:event_id', (req, res) => {
         });
 });
 
+app.get('/api/events', (req, res) => {
+    eventService.getAllEvents()
+        .then((events) => {
+            res.json({ "events": events });
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
 app.post('/api/event/:event_id', passport.authenticate('general', {session: false}), [ check('userId')
 .equals('27').withMessage('You are not authorized to approve this')
 ], (req, res)=>{
