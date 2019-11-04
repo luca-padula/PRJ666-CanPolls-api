@@ -138,12 +138,13 @@ app.post('/api/register', [
         .matches(/\d/).withMessage('Password must contain a number')
         .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
         .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2').custom((value, {req}) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords do not match');
-        }
-        return true;
-    })
+    check('password2')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        })
 ], (req, res) => {
     // Fail the request if there are validation errors and return them
     const errors = validationResult(req);
@@ -204,12 +205,13 @@ app.post('/api/resetPassword/:userId/:token', [
         .matches(/\d/).withMessage('Password must contain a number')
         .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
         .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2').custom((value, {req}) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords do not match');
-        }
-        return true;
-    })
+    check('password2')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        })
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -272,7 +274,38 @@ app.post('/api/event/:event_id', passport.authenticate('general', {session: fals
     });
 })
 
-app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), [
+    check('event_title')
+        .trim()
+        .not().isEmpty().withMessage('Event title cannot be empty')
+        .isLength({max: 80}).withMessage('Event title is too long'),
+    check('event_description')
+        .trim()
+        .not().isEmpty().withMessage('Event description cannot be empty'),
+    check('attendee_limit')
+        .isNumeric()
+        .custom((value, { req }) => {
+            if (value < 0) {
+                throw new Error('Invalid attendee limit entered');
+            }
+            return true;
+        }),
+    check('date_from')
+        .isAfter().withMessage('Invalid start date entered'),
+    check('date_to')
+        .custom((value, { req }) => {
+            let start = new Date(req.body.date_from);
+            let end = new Date(value);
+            if (start >= end) {
+                throw new Error('Invalid end date entered');
+            }
+            return true;
+        })
+], (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
@@ -300,7 +333,19 @@ app.get('/api/location/:eventId', (req, res) => {
         });
 });
 
-app.put('/api/location/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+app.put('/api/location/:eventId', passport.authenticate('general', {session: false}), [
+    check('venue_name')
+        .trim()
+        .not().isEmpty().withMessage('Venue name cannot be empty')
+        .isLength({max: 100}).withMessage('Venue name is too long'),
+    check('postal_code')
+        .trim()
+        .isPostalCode('CA').withMessage('Invalid postal code entered')
+], (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
