@@ -30,7 +30,10 @@ module.exports.getEventById = function(eId){
             where:{event_id: eId}
         })
         .then((event) => {
-            resolve(event);
+            if (event)
+                resolve(event);
+            else
+                reject('Event does not exist');
         })
         .catch((err) => {
             console.log(err.message);
@@ -106,10 +109,49 @@ module.exports.updateEventById = function(eId, uId, eventData) {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
             }
         })
-            .then(() => resolve('Event ' + eId + ' successfully updated'))
+            .then(() => resolve('Event successfully updated'))
             .catch((err) => {
                 console.log(err);
                 reject('Error updating event');
+            });
+    });
+}
+
+module.exports.getLocationByEventId = function(eId) {
+    return new Promise((resolve, reject) => {
+        Location.findOne({
+            where: {EventEventId: eId}
+        })
+            .then((location) => resolve(location))
+            .catch((err) => {
+                console.log(err);
+                reject('Error getting location');
+            });
+    });
+}
+
+module.exports.updateLocationByEventId = function(eId, locationData) {
+    return new Promise((resolve, reject) => {
+        Location.update(locationData, {
+            where: {EventEventId: eId}
+        })
+            .then(() => resolve('Location successfully updated'))
+            .catch((err) => {
+                console.log(err);
+                reject('Error updating location');
+            });
+    });
+}
+
+module.exports.getRegistrationsByEventId = function(eId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findAll({
+            where: {EventEventId: eId}
+        })
+            .then((registrations) => resolve(registrations))
+            .catch((err) => {
+                console.log(err);
+                reject('Error getting registrations');
             });
     });
 }
@@ -242,4 +284,19 @@ module.exports.approveEvent = function(event_id, data){
         })
         
     })
+}
+
+module.exports.getAllEventsByUser = function(userId){
+    return new Promise((resolve, reject)=>{
+        Event.findAll({
+            where:{UserUserId: userId}
+        })
+        .then((event) => {
+            resolve(event);
+        })
+        .catch((err) => {
+            console.log(err.message);
+            reject('An error occured');
+        })
+    });
 }

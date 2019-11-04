@@ -46,20 +46,28 @@ app.get('/api/users/:userName', (req, res) => {
     });
 });
 
-app.post('/api/updateUser', [
+app.put('/api/updateUser/:userId', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
         .bail()
         .custom((value) => {
             return userService.findUserByEmail(value).then((foundUser) => {
-                if (foundUser) {
-                    return Promise.reject('Email is already registered');
+                if (foundUser && !foundUser.email) {
+                  return Promise.reject(foundUser.email+ ' Email is already registered');
                 }
             })
             .catch((msg) => {
                 return Promise.reject(msg);
             });
         }),
+        check('firstName')
+        .trim()//+*?^$()[/]{}]
+        .not().matches(/[^a-zA-Z]/).withMessage('Firstname cannot contain anything but digits!')
+        .bail(),
+        check('lastName')
+        .trim()//+*?^$()[/]{}]
+        .not().matches(/[^a-zA-Z]/).withMessage('Lastname cannot contain anything but digits!')
+        .bail(),
         check('userName')
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
@@ -69,8 +77,8 @@ app.post('/api/updateUser', [
         .bail()
         .custom((value) => {
             return userService.findUserByUsername(value).then((foundUser) => {
-                if (foundUser) {
-                    return Promise.reject('Username already taken');
+                if (foundUser && !foundUser.userName) {
+                  return Promise.reject('Username already taken');
                 }
             })
             .catch((msg) => {
@@ -83,8 +91,9 @@ app.post('/api/updateUser', [
     if (!errors.isEmpty()) {
         return res.status(422).json({ "validationErrors": errors.array() });
     }
-    userService.registerUser(req.body)
+    userService.updateUserInfo(req.params.userId, req.body)
         .then((msg) => {
+            console.log(msg);
             res.json({"message": msg});
         })
         .catch((msg) => {
@@ -129,12 +138,13 @@ app.post('/api/register', [
         .matches(/\d/).withMessage('Password must contain a number')
         .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
         .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2').custom((value, {req}) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords do not match');
-        }
-        return true;
-    })
+    check('password2')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        })
 ], (req, res) => {
     // Fail the request if there are validation errors and return them
     const errors = validationResult(req);
@@ -146,7 +156,7 @@ app.post('/api/register', [
             res.json({"message": msg});
         })
         .catch((msg) => {
-            res.status(422).json({"message": msg});
+            res.status(500).json({"message": msg});
         });
 });
 
@@ -172,7 +182,7 @@ app.post('/api/login', (req, res) => {
             res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
         })
         .catch((msg) => {
-            res.status(422).json({ "message": msg });
+            res.status(400).json({ "message": msg });
         });
 });
 
@@ -195,12 +205,13 @@ app.post('/api/resetPassword/:userId/:token', [
         .matches(/\d/).withMessage('Password must contain a number')
         .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
         .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2').custom((value, {req}) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords do not match');
-        }
-        return true;
-    })
+    check('password2')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        })
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -240,7 +251,7 @@ app.post('/api/createEvent',[
 app.get('/api/event/:event_id', (req, res) => {
     eventService.getEventById(req.params.event_id)
         .then((event) => {
-            res.json({ "event": event });
+            res.json(event);
         })
         .catch((err) => {
             res.status(422).json({ "message": err });
@@ -272,18 +283,107 @@ app.post('/api/event/:event_id', passport.authenticate('general', {session: fals
     });
 })
 
-app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), (req, res) => {
+app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), [
+    check('event_title')
+        .trim()
+        .not().isEmpty().withMessage('Event title cannot be empty')
+        .isLength({max: 80}).withMessage('Event title is too long'),
+    check('event_description')
+        .trim()
+        .not().isEmpty().withMessage('Event description cannot be empty'),
+    check('attendee_limit')
+        .isNumeric()
+        .custom((value, { req }) => {
+            if (value < 0) {
+                throw new Error('Invalid attendee limit entered');
+            }
+            return true;
+        }),
+    check('date_from')
+        .isAfter().withMessage('Invalid start date entered'),
+    check('date_to')
+        .custom((value, { req }) => {
+            let start = new Date(req.body.date_from);
+            let end = new Date(value);
+            if (start >= end) {
+                throw new Error('Invalid end date entered');
+            }
+            return true;
+        })
+], (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to edit this event');
             }
             else {
-                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body)
+                return eventService.updateEventById(req.params.eventId, req.user.userId, req.body);
             }
         })
         .then((msg) => {
             res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.get('/api/location/:eventId', (req, res) => {
+    eventService.getLocationByEventId(req.params.eventId)
+        .then((location) => {
+            res.json(location);
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.put('/api/location/:eventId', passport.authenticate('general', {session: false}), [
+    check('venue_name')
+        .trim()
+        .not().isEmpty().withMessage('Venue name cannot be empty')
+        .isLength({max: 100}).withMessage('Venue name is too long'),
+    check('postal_code')
+        .trim()
+        .isPostalCode('CA').withMessage('Invalid postal code entered')
+], (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to edit this location');
+            }
+            else {
+                return eventService.updateLocationByEventId(req.params.eventId, req.body);
+            }
+        })
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.get('/api/event/:eventId/registrations', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
+                return Promise.reject('You are not authorized to view this info');
+            }
+            else {
+                return eventService.getRegistrationsByEventId(req.params.eventId);
+            }
+        })
+        .then((registrations) => {
+            res.json(registrations);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
@@ -301,12 +401,23 @@ app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', 
             }
         })
         .then((registeredUsers) => {
-            res.json({ "users": registeredUsers });
+            res.json(registeredUsers);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
         });
 });
+
+app.get('/api/events/createdEvents/:userId', (req, res) => {
+    eventService.getAllEventsByUser(req.params.userId)
+        .then((event) => {
+            res.json(event);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
