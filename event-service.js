@@ -44,7 +44,9 @@ module.exports.getEventById = function(eId){
 
 module.exports.getAllEvents = function() {
     return new Promise((resolve, reject) => {
-        Event.findAll({})
+        Event.findAll({
+            where:{isApproved:true}
+        })
             .then((events) => {
                 resolve(events);
             })
