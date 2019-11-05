@@ -146,6 +146,32 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
     });
 }
 
+module.exports.sendEventUpdateEmails = function(eId) {
+    return new Promise((resolve, reject) => {
+        this.getRegistrationsWithUsersByEventId(eId)
+            .then((registrations) => {
+                registrations.forEach((reg) => {
+                    if (reg.status != 'removed') {
+                        let mailLink = mailService.appUrl + '\/event\/' + eId + '\/edit';
+                        let mailText = 'Hello ' + reg.User.firstName + ',\nAn event for which you are registered has been updated. ' +
+                            'You can view the updated event at the link below.\n' + mailLink;
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: reg.User.email,
+                            subject: 'PRJ666 Canpolls Event Update',
+                            text: mailText
+                        };
+                        mailService.sendEmail(mailData);
+                    }
+                });
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('Error getting registrations');
+            });
+    });
+}
+
 module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAll({

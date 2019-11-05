@@ -326,6 +326,7 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         })
         .then((msg) => {
             res.json({ "message": msg });
+            eventService.sendEventUpdateEmails(req.params.eventId);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
