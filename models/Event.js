@@ -51,7 +51,10 @@ var Event = database.define('Event', {
         allowNull:false
     }
 });
+
 Event.hasOne(Location);
+Location.belongsTo(Event);
 Event.hasMany(EventRegistration);
+EventRegistration.belongsTo(Event);
 
 module.exports = {Event};

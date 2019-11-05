@@ -115,6 +115,7 @@ module.exports.getLocationByEventId = function(eId) {
 
 module.exports.updateLocationByEventId = function(eId, locationData) {
     return new Promise((resolve, reject) => {
+        locationData.postal_code = locationData.postal_code.replace(/\s/g, '').toUpperCase();
         Location.update(locationData, {
             where: {EventEventId: eId}
         })
@@ -126,46 +127,18 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
     });
 }
 
-module.exports.getRegistrationsByEventId = function(eId) {
+module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAll({
-            where: {EventEventId: eId}
+            include: [User],
+            where: { EventEventId: eId }
         })
-            .then((registrations) => resolve(registrations))
+            .then((registrations) => {
+                resolve(registrations);
+            })
             .catch((err) => {
                 console.log(err);
                 reject('Error getting registrations');
-            });
-    });
-}
-
-module.exports.getRegisteredUsersByEventId = function(eId) {
-    return new Promise((resolve, reject) => {
-        EventRegistration.findAll({
-            attributes: ['UserUserId'],
-            where: {
-                EventEventId: eId
-            }
-        })
-            .then((resultIds) => {
-                let foundUserIds = [];
-                for (var i = 0; i < resultIds.length; i++) {
-                    foundUserIds.push(resultIds[i].UserUserId);
-                }
-                return User.findAll({
-                    where: {
-                        userId: {
-                            [Op.in]: foundUserIds
-                        }
-                    }
-                });
-            })
-            .then((registeredUsers) => {
-                resolve(registeredUsers);
-            })
-            .catch((err) => {
-                console.log(err);
-                reject('error getting registered users');
             });
     });
 }

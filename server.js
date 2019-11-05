@@ -363,36 +363,19 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         });
 });
 
-app.get('/api/event/:eventId/registrations', passport.authenticate('general', {session: false}), (req, res) => {
+// This route returns registrations for a given event with their associated user
+app.get('/api/event/:eventId/registrationData', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to view this info');
             }
             else {
-                return eventService.getRegistrationsByEventId(req.params.eventId);
+                return eventService.getRegistrationsWithUsersByEventId(req.params.eventId)
             }
         })
         .then((registrations) => {
             res.json(registrations);
-        })
-        .catch((err) => {
-            res.status(500).json({ "message": err });
-        });
-});
-
-app.get('/api/event/:eventId/registeredUsers', passport.authenticate('general', {session: false}), (req, res) => {
-    eventService.getEventById(req.params.eventId)
-        .then((foundEvent) => {
-            if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
-                return Promise.reject('You are not authorized to view this info');
-            }
-            else {
-                return eventService.getRegisteredUsersByEventId(req.params.eventId)
-            }
-        })
-        .then((registeredUsers) => {
-            res.json(registeredUsers);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });

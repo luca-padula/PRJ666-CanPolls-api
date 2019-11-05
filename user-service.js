@@ -89,7 +89,7 @@ module.exports.registerUser = function(userData) {
             .then((hash) => {
                 userData.password = hash;
                 let randomString = crypto.randomBytes(32).toString('hex');
-                let randomHash = bcrypt.hashSync(randomString, 10).replace('\/', '');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace(/\//g, '');
                 userData.verificationHash = randomHash;
                 return User.create(userData);
             })
