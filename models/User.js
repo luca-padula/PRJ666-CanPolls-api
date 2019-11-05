@@ -68,7 +68,9 @@ var User = database.define('User', {
 //  i.e. could import a model called Events and do:
 
  User.hasMany(Event); //- automatically creates foreign keys
+ Event.belongsTo(User);
  User.hasMany(EventRegistration);
+ EventRegistration.belongsTo(User);
 
 // see https://web322.ca/notes/week07 for more details
 

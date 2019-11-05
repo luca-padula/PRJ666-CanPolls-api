@@ -134,6 +134,7 @@ module.exports.getLocationByEventId = function(eId) {
 
 module.exports.updateLocationByEventId = function(eId, locationData) {
     return new Promise((resolve, reject) => {
+        locationData.postal_code = locationData.postal_code.replace(/\s/g, '').toUpperCase();
         Location.update(locationData, {
             where: {EventEventId: eId}
         })
@@ -145,12 +146,25 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
     });
 }
 
-module.exports.getRegistrationsByEventId = function(eId) {
+module.exports.sendEventUpdateEmails = function(eId) {
     return new Promise((resolve, reject) => {
-        EventRegistration.findAll({
-            where: {EventEventId: eId}
-        })
-            .then((registrations) => resolve(registrations))
+        this.getRegistrationsWithUsersByEventId(eId)
+            .then((registrations) => {
+                registrations.forEach((reg) => {
+                    if (reg.status != 'removed') {
+                        let mailLink = mailService.appUrl + '\/event\/' + eId + '\/edit';
+                        let mailText = 'Hello ' + reg.User.firstName + ',\nAn event for which you are registered has been updated. ' +
+                            'You can view the updated event at the link below.\n' + mailLink;
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: reg.User.email,
+                            subject: 'PRJ666 Canpolls Event Update',
+                            text: mailText
+                        };
+                        mailService.sendEmail(mailData);
+                    }
+                });
+            })
             .catch((err) => {
                 console.log(err);
                 reject('Error getting registrations');
@@ -158,33 +172,18 @@ module.exports.getRegistrationsByEventId = function(eId) {
     });
 }
 
-module.exports.getRegisteredUsersByEventId = function(eId) {
+module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAll({
-            attributes: ['UserUserId'],
-            where: {
-                EventEventId: eId
-            }
+            include: [User],
+            where: { EventEventId: eId }
         })
-            .then((resultIds) => {
-                let foundUserIds = [];
-                for (var i = 0; i < resultIds.length; i++) {
-                    foundUserIds.push(resultIds[i].UserUserId);
-                }
-                return User.findAll({
-                    where: {
-                        userId: {
-                            [Op.in]: foundUserIds
-                        }
-                    }
-                });
-            })
-            .then((registeredUsers) => {
-                resolve(registeredUsers);
+            .then((registrations) => {
+                resolve(registrations);
             })
             .catch((err) => {
                 console.log(err);
-                reject('error getting registered users');
+                reject('Error getting registrations');
             });
     });
 }
