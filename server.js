@@ -227,6 +227,64 @@ app.post('/api/resetPassword/:userId/:token', [
 });
 
 
+app.put('/api/updatePassword/:userId' , [
+                check('password')
+                    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+                    .matches(/\d/).withMessage('Password must contain a number')
+                    .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+                    .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
+                check('password2')
+                    .custom((value, { req }) => {
+                        if (value !== req.body.password) {
+                            throw new Error('Passwords do not match');
+                        }
+                        return true;
+                    })
+            ], (req,res) => {
+
+
+
+
+            //console.log("inside post");    
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(422).json({ "validationErrors": errors.array() });
+            }
+            console.log("params.userid: "+ req.params.userId);
+            console.log("req.body: "+req.body);
+            userService.updatePassword(req.params.userId, req.body)
+            .then((successMessage) => {
+                console.log(successMessage)
+                res.json({ "message": successMessage });
+            })
+            .catch((errMessage) => {
+                return res.status(422).json({ "message": errMessage })
+            });
+           /* console.log("req: "+JSON.stringify(req.body.currentUser));
+            console.log("req: "+JSON.stringify(req.body.password));
+            console.log("req: "+JSON.stringify(req.body.password2));
+            console.log("req: "+JSON.stringify(req.body.curPass));
+            
+
+            var jsonString =JSON.stringify(req.body.currentUser);
+            var oldPass = JSON.stringify(req.body.curPass)
+            userService.checkUser2(jsonString,oldPass)
+            .then((user) => {
+                console.log("server js  254: "+user);
+                res.json({user});
+            })
+            .catch((msg) => {
+                console.log("server js catch 258: "+msg);
+                 res.status(400).json({ "message": msg });
+            });
+
+            
+    */
+
+});
+
+
+
 // Event routes
 
 app.post('/api/createEvent',[

@@ -343,3 +343,110 @@ module.exports.resetPassword = function(id, token, passwordData) {
             })
     });
 }
+
+
+module.exports.updatePassword = function(id, passwordData) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: id
+            }
+        })
+            .then((payload) => {
+                if (payload.userId != id) {
+                    return reject('bad token');
+                }
+                return bcrypt.hashSync(passwordData.password, 10);
+            })
+            .then((hash) => {
+                console.log(hash);
+                return User.update({
+                    password: hash
+                }, {
+                    where: { userId: id }
+                });
+            })
+            .then((updatedUser) => {
+                resolve('password updated!');
+            })
+            .catch((err) => {
+                console.log(err.message);
+                reject(err.message);
+            })
+    });
+}
+
+
+module.exports.checkUser2 = function (userData, oldPassword) {
+    var jsonObj = JSON.parse(userData);
+    return new Promise((resolve, reject) => {
+        //console.log("userdata "+userData);
+        //console.log("userdat. username "+jsonObj.userName);
+        userData=jsonObj;
+        let foundUser;
+        this.findUserByUsername(userData.userName)
+            .then((result) => {
+                if (result) {
+                    foundUser = result;
+                    return true;
+                }
+                else {
+                    return this.findUserByEmail(userData.email);
+                }
+            })
+            .then((foundByEmail) => {
+                if (!foundUser) { 
+                    if (foundByEmail) {
+                        foundUser = foundByEmail;
+                    }
+                    else {
+                        return reject('Incorrect email, username, or password entered');
+                    }
+                }
+                if (!foundUser.isVerified) {
+                    
+                    return reject('You need to verify your account before you can log in. Check your email for the link.')
+                }
+                
+               /* 
+               // var newlyFound = JSON.parse(foundUser);
+               // console.log("userdata hashing:: "+bcrypt.hashSync(userData.password, 10));
+               console.log(oldPassword);
+               bcrypt.hash(oldPassword, 10)
+               .then((hash) => {
+                console.log("hashed   password: "+ hash);
+               
+               })
+*/
+                bcrypt.compare(oldPassword, userData.password, function(err, res) {
+                    if(res) {
+                     console.log("matches " +res);
+                                    } else {
+                                        console.log(" no matche "+res);
+                    } 
+                  });
+               console.log(oldPassword);
+             
+
+              
+                console.log("userdata password: "+userData.password);
+                console.log("founduse password: "+foundUser.password);
+                //console.log(bcrypt.compare(userData.password, foundUser.password));
+                return (userData.password).localeCompare(foundUser.password);                
+            })
+            .then((passwordsMatch) => {
+                if (!passwordsMatch) {
+                    resolve(foundUser);
+                    console.log("if 421 " +foundUser );
+                }
+                else {
+                    console.log("elsef 424 " +foundUser );
+                    reject('Incorrect email, username, or password entered');
+                }
+            })
+            .catch((err) => {
+                console.log("reject" +err);
+                reject(err);
+            });
+    });
+}
