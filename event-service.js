@@ -42,6 +42,20 @@ module.exports.getEventById = function(eId){
     });
 }
 
+module.exports.getAllEvents = function() {
+    return new Promise((resolve, reject) => {
+        Event.findAll({
+            where:{isApproved:true}
+        })
+            .then((events) => {
+                resolve(events);
+            })
+            .catch((err) => {
+                reject('An error occured');
+            });
+    });
+}
+
 module.exports.createEvent = function(eventData){
     return new Promise((resolve, reject)=>{
         console.log(eventData.event_title);
@@ -63,12 +77,12 @@ module.exports.createEvent = function(eventData){
             province: eventData.province,
             postal_code: eventData.postal_code
         })
-            .then((eventData)=>{
-                let mailLink = mailService.appUrl + '\/' + eventData.event_id;
-                let mailText = 'Hello Admin,\nThere is new event just created. Here is the information: ' +
-                    '\n Event Title: ' + eventData.event_title +
-                    '\n Event Description: ' + eventData.event_description +
-                    '\n Click here to approve the event. \n' + mailLink;
+            .then(()=>{
+                Event.findAll({}).then((events)=>{
+
+                    let mailLink = mailService.appUrl + '\/event\/' + events[events.length - 1].event_id;
+                let mailText = 'Hello Admin,\nThere is new event just created.' +
+                    '\n Click here to check ot the event. \n' + mailLink;
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: 'amhnguyen@myseneca.ca',
@@ -78,6 +92,11 @@ module.exports.createEvent = function(eventData){
                 mailService.sendEmail(mailData)
                         .then(()=>resolve('Event ' + eventData.event_id + ' successfully submitted'))
                         .catch((msg) => reject('Error sending verification email'));
+                })
+            .catch((err)=>{
+                reject('Counldnt fine the event');
+            })
+                
             })
             .catch((err) =>{
                 reject('Couldnt submit event');
@@ -200,30 +219,26 @@ module.exports.approveEvent = function(event_id, data){
             Event.update({
                 isApproved: data.isApproved
             }, {
-                where: {event_id: event_id}
+                where: {event_id: event.event_id}
             });
-            console.log(event.isApproved);
-        
-            
-            
-            
+            console.log(event.isApproved); 
             User.findOne({
-                where:{userId: data.userId}
+                where:{userId: event.UserUserId}
             })
             .then((foundUser)=>{
                 console.log(foundUser.userId);
-                if(event.isApproved){
-                    console.log(event.isApproved);
-                    
-                }
-                else{
-                    let mailText = 'Hello,\nThis is an email to reply to your event.'+
-                        '\nWe are sorry to inform that your event has been declined by our presentative.';
-                }
+                let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
-                let mailText = 'Hello,\nThis is an email to reply to your event.'+
+                if(data.isApproved){
+                    console.log(event.isApproved);
+                    mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nCongratulation! Your event has been approved by our presentative.'+
                     '\nHere is a link to your event.\n' + mailLink;
+                }
+                else{
+                    mailText = 'Hello,\nThis is an email to reply to your event.'+
+                        '\nWe are sorry to inform that your event has been declined by our presentative.';
+                }
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: foundUser.email,
