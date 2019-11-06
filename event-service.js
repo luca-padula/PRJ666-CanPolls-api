@@ -105,6 +105,7 @@ module.exports.createEvent = function(eventData){
 }
 
 module.exports.updateEventById = function(eId, uId, eventData) {
+    // TO-DO: Send email to admin of corresponding party requesting approval after updating
     return new Promise((resolve, reject) => {
         Event.update(eventData, {
             where: {
@@ -188,6 +189,37 @@ module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     });
 }
 
+module.exports.getRegistration = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findOne({
+            where: {
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+            }
+        })
+            .then((registration) => resolve(registration))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function returns all registrations (status is not 'removed') for a given event id with a count of all rows returned
+module.exports.getRegistrationsWithCount = function(eventId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findAndCountAll({
+            where: {
+                status: { [Op.not]: 'removed' }
+            }
+        })
+            .then((result) => resolve(result))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
 module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
     return new Promise((resolve, reject) => {
         EventRegistration.update({
@@ -216,7 +248,7 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: foundUser.email,
-                    subject: 'CanPolls Event ' + eventId,
+                    subject: 'PRJ666 CanPolls Event Notice',
                     text: mailText
                 };
                 return mailService.sendEmail(mailData);

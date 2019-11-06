@@ -16,17 +16,9 @@ var app = express();
 app.use(passport.initialize());
 app.use(cors());
 app.use(bodyParser.json());
-//passport.authenticate('jwt', {session: false}),
+
+
 // User routes
-// Example route to see protection of a route using JWT, will be removed
-app.get('/api/users',  (req, res) => {
-    userService.getAllUsers().then((msg) => {
-        res.json({"message": msg});
-    })
-    .catch((msg) => {
-        res.status(422).json({"message": msg});
-    });
-});
 
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
@@ -358,7 +350,7 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             return true;
         }),
     check('date_from')
-        .isAfter().withMessage('Invalid start date entered'),
+        .isAfter().withMessage('You entered a start date that has already passed'),
     check('date_to')
         .custom((value, { req }) => {
             let start = new Date(req.body.date_from);
@@ -438,7 +430,7 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         });
 });
 
-// This route returns registrations for a given event with their associated user
+// This route returns all registrations for a given event with their associated user
 app.get('/api/event/:eventId/registrationData', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
@@ -457,6 +449,13 @@ app.get('/api/event/:eventId/registrationData', passport.authenticate('general',
         });
 });
 
+// This route returns a single registration for a specific event and user
+app.get('/api/event/:eventId/registration/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getRegistration(req.params.eventId, req.params.userId)
+        .then((registration) => res.json(registration))
+        .catch((err) => res.status(500).json({ "message": err }));
+});
+
 app.get('/api/events/createdEvents/:userId', (req, res) => {
     eventService.getAllEventsByUser(req.params.userId)
         .then((event) => {
@@ -467,6 +466,14 @@ app.get('/api/events/createdEvents/:userId', (req, res) => {
         });
 });
 
+// This route returns a count of all the registrations (registration status is not 'removed') for a given event id
+app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getRegistrationsWithCount(req.params.eventId)
+        .then((result) => res.json(result.count))
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
 
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
