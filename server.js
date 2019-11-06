@@ -319,7 +319,7 @@ app.get('/api/event/:event_id', (req, res) => {
 app.get('/api/events', (req, res) => {
     eventService.getAllEvents()
         .then((events) => {
-            res.json({ "events": events });
+            res.json(events);
         })
         .catch((err) => {
             res.status(422).json({ "message": err });
