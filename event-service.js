@@ -188,7 +188,7 @@ module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     });
 }
 
-module.exports.removeUserFromEvent = function(eventId, userId) {
+module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
     return new Promise((resolve, reject) => {
         EventRegistration.update({
             status: 'removed'
@@ -212,7 +212,7 @@ module.exports.removeUserFromEvent = function(eventId, userId) {
                     return reject("Invalid user");
                 }
                 let mailText = 'Hello, ' + foundUser.firstName + '\n' +
-                'The administrator of event ' + eventId + ' has chosen to remove you from the event registration';
+                'The owner of event "' + eventName + '" has chosen to remove you from the event registration';
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: foundUser.email,

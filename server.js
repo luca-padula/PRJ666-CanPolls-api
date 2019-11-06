@@ -408,7 +408,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         .isLength({max: 100}).withMessage('Venue name is too long'),
     check('postal_code')
         .trim()
-        .isPostalCode('CA').withMessage('Invalid postal code entered')
+        .isPostalCode('CA').withMessage('Invalid postal code entered'),
+    check('street_name')
+        .trim()
+        .not().isEmpty().withMessage('Street cannot be empty'),
+    check('city')
+        .trim()
+        .not().isEmpty().withMessage('City cannot be empty')
 ], (req, res) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()){
@@ -425,6 +431,7 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         })
         .then((msg) => {
             res.json({ "message": msg });
+            eventService.sendEventUpdateEmails(req.params.eventId);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
@@ -468,7 +475,7 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
                 return Promise.reject('You are not authorized to do this');
             }
             else {
-                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId, foundEvent.event_title)
             }
         })
         .then((msg) => {
