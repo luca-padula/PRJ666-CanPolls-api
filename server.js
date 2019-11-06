@@ -475,6 +475,17 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
         });
 });
 
+app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.registerUserForEvent(req.params.eventId, req.params.userId)
+        .then((msg) => {
+            res.json({ "message": msg });
+            eventService.sendEventRegistrationNoticeToOwner(req.params.eventId);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {

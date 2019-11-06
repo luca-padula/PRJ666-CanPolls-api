@@ -18,7 +18,7 @@ module.exports.getUserById = function(uId) {
             resolve(user);
         })
         .catch((err) => {
-            reject('An error occured');
+            reject('Error getting user');
         })
     });
 }

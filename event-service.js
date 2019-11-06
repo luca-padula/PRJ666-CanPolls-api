@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
 const mailService = require('./mail-service.js');
+const userService = require('./user-service.js');
 
 const Op = Sequelize.Op;
 
@@ -159,7 +160,7 @@ module.exports.sendEventUpdateEmails = function(eId) {
                         let mailData = {
                             from: mailService.appFromEmailAddress,
                             to: reg.User.email,
-                            subject: 'PRJ666 Canpolls Event Update',
+                            subject: 'PRJ666 CanPolls Event Update',
                             text: mailText
                         };
                         mailService.sendEmail(mailData);
@@ -213,6 +214,73 @@ module.exports.getRegistrationsWithCount = function(eventId) {
             }
         })
             .then((result) => resolve(result))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.registerUserForEvent = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findOne({
+            where: {
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+            }
+        })
+            .then((registration) => {
+                if (!registration)
+                    return this.getEventById(eventId);
+                else
+                    return Promise.reject('You have already registered for this event');
+            })
+            .then((event) => {
+                return userService.getUserById(userId);
+            })
+            .then((user) => {
+                if (user)
+                    return EventRegistration.create({
+                        EventEventId: eventId,
+                        UserUserId: userId
+                    });
+                else
+                    return Promise.reject('Invalid user given for registration');
+            })
+            .then(() => resolve('You have successfully registered for this event'))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function sends an email to the owner of a given event id notifying them that
+// a user has registered for their event
+module.exports.sendEventRegistrationNoticeToOwner = function(eventId) {
+    return new Promise((resolve, reject) => {
+        let eventName;
+        this.getEventById(eventId)
+            .then((event) => {
+                eventName = event.event_title;
+                return userService.getUserById(event.UserUserId)
+            })
+            .then((user) => {
+                if (user) {
+                    let mailLink = mailService.appUrl + '\/event\/' + eventId + '\/edit';
+                    let mailText = 'Hello ' + user.firstName + ',\nA user has registered for your event: "' + eventName + '".\n' +
+                        'You can view all the registered users at the link below.\n' + mailLink;
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: user.email,
+                        subject: 'PRJ666 CanPolls Event Update',
+                        text: mailText
+                    };
+                    return mailService.sendEmail(mailData);
+                }
+                else
+                    return reject('Invalid user to send email');
+            })
+            .then(() => resolve())
             .catch((err) => {
                 console.log(err);
                 reject(err);
