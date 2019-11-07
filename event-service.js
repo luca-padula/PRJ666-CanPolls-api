@@ -76,7 +76,8 @@ module.exports.createEvent = function(eventData){
             street_name: eventData.street_name,
             city: eventData.city,
             province: eventData.province,
-            postal_code: eventData.postal_code
+            postal_code: eventData.postal_code,
+            EventEventId: eventData.event_Id
         })
             .then(()=>{
                 Event.findAll({}).then((events)=>{
