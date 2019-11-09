@@ -39,6 +39,7 @@ module.exports.getUserById = function(uId) {
 
 module.exports.updateUserInfo = function(userId, userData) {
     return new Promise((resolve, reject) => {
+        var emailChanged = 0;
         User.findOne({
             where: {
                 userId: userId
@@ -47,13 +48,38 @@ module.exports.updateUserInfo = function(userId, userData) {
             .then((foundUser) => {
                 console.log(foundUser);
                 if ( !foundUser || !foundUser.isVerified) {
-                    return reject('failing in here');
+                    return reject('User not found or Email not verified!');
+                }
+                if(userData.email != foundUser.email)
+                {
+                            emailChanged = 1;
+                            let mailLink = mailService.appUrl + '\/verifyEmail\/' + foundUser.userId +
+                                '\/' + foundUser.verificationHash;
+                            let mailText = 'Hello ' + foundUser.firstName + ',\nthank you for registering with Canpolls. ' +
+                                'Please click the link below to verify your account.\n' + mailLink;
+                            let mailData = {
+                                from: mailService.appFromEmailAddress,
+                                to: foundUser.email,
+                                subject: 'PRJ666 Canpolls Account Verification',
+                                text: mailText
+                            };
+                            mailService.sendEmail(mailData);
+                            User.update({
+                                isVerified: false
+                            }, {
+                                where: { userId: foundUser.userId }
+                            }) 
                 }
                 User.update(userData, {
                     where: { userId: foundUser.userId }
                 })
                     .then(() => {
-                        resolve('User ' + foundUser.userName + ' successfully updated');
+                            var finalMessage = 'User '+ foundUser.userName + ' successfully updated.';
+                            if(emailChanged == 1)
+                            {
+                                finalMessage+= ' You have changed your email address. Please verify the new address.';
+                            }
+                        resolve(finalMessage);
                     })
                     .catch((err) => {
                         console.log(err);
@@ -66,22 +92,6 @@ module.exports.updateUserInfo = function(userId, userData) {
             });
     });
 }
-/*
-module.exports.getUserById = function(id) {
-    return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM `Users` where `userId` = ?', [id],(err, results) => {
-            if (err) {
-                reject('couldnt get users');
-                console.log("not rejected");
-            }
-            else {
-                resolve(results);
-                console.log(results);
-            }
-        });
-    });
-}
-*/
 
 module.exports.registerUser = function(userData) {
     return new Promise((resolve, reject) => {
@@ -345,19 +355,9 @@ module.exports.resetPassword = function(id, token, passwordData) {
 }
 
 
-module.exports.updatePassword = function(id, passwordData) {
+module.exports.updatePassword = function(id, password) {
     return new Promise((resolve, reject) => {
-        User.findOne({
-            where: {
-                userId: id
-            }
-        })
-            .then((payload) => {
-                if (payload.userId != id) {
-                    return reject('bad token');
-                }
-                return bcrypt.hashSync(passwordData.password, 10);
-            })
+        bcrypt.hash(password, 10)
             .then((hash) => {
                 console.log(hash);
                 return User.update({
@@ -377,76 +377,23 @@ module.exports.updatePassword = function(id, passwordData) {
 }
 
 
-module.exports.checkUser2 = function (userData, oldPassword) {
-    var jsonObj = JSON.parse(userData);
-    return new Promise((resolve, reject) => {
-        //console.log("userdata "+userData);
-        //console.log("userdat. username "+jsonObj.userName);
-        userData=jsonObj;
-        let foundUser;
-        this.findUserByUsername(userData.userName)
-            .then((result) => {
-                if (result) {
-                    foundUser = result;
-                    return true;
-                }
-                else {
-                    return this.findUserByEmail(userData.email);
-                }
-            })
-            .then((foundByEmail) => {
-                if (!foundUser) { 
-                    if (foundByEmail) {
-                        foundUser = foundByEmail;
-                    }
-                    else {
-                        return reject('Incorrect email, username, or password entered');
-                    }
-                }
-                if (!foundUser.isVerified) {
-                    
-                    return reject('You need to verify your account before you can log in. Check your email for the link.')
-                }
-                
-               /* 
-               // var newlyFound = JSON.parse(foundUser);
-               // console.log("userdata hashing:: "+bcrypt.hashSync(userData.password, 10));
-               console.log(oldPassword);
-               bcrypt.hash(oldPassword, 10)
-               .then((hash) => {
-                console.log("hashed   password: "+ hash);
-               
-               })
-*/
-                bcrypt.compare(oldPassword, userData.password, function(err, res) {
-                    if(res) {
-                     console.log("matches " +res);
-                                    } else {
-                                        console.log(" no matche "+res);
-                    } 
-                  });
-               console.log(oldPassword);
-             
+module.exports.checkUser2 = function (userData, oldPassword, newPassword) {
 
-              
-                console.log("userdata password: "+userData.password);
-                console.log("founduse password: "+foundUser.password);
-                //console.log(bcrypt.compare(userData.password, foundUser.password));
-                return (userData.password).localeCompare(foundUser.password);                
-            })
-            .then((passwordsMatch) => {
-                if (!passwordsMatch) {
-                    resolve(foundUser);
-                    console.log("if 421 " +foundUser );
+    return new Promise((resolve, reject) => {
+        bcrypt.compare(oldPassword, userData.password)
+        
+            .then((match) => {
+                if (match) {
+                    return this.updatePassword(userData.userId, newPassword)
                 }
                 else {
-                    console.log("elsef 424 " +foundUser );
-                    reject('Incorrect email, username, or password entered');
+                    return reject('Incorrect current password entered.');
                 }
             })
+            .then(() => resolve())
             .catch((err) => {
-                console.log("reject" +err);
+                console.log(err);
                 reject(err);
-            });
-    });
+            })
+    })
 }

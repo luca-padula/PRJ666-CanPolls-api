@@ -47,6 +47,7 @@ app.get('/api/users/:userName', (req, res) => {
 });
 
 app.put('/api/updateUser/:userId', [
+    //var isEmailChanged=0;
     check('email')
         .isEmail().withMessage('Invalid email entered')
         .bail()
@@ -62,11 +63,11 @@ app.put('/api/updateUser/:userId', [
         }),
         check('firstName')
         .trim()//+*?^$()[/]{}]
-        .not().matches(/[^a-zA-Z]/).withMessage('Firstname cannot contain anything but digits!')
+        .not().matches(/[^a-zA-Z ]/).withMessage('Firstname cannot contain anything but letters!')
         .bail(),
         check('lastName')
         .trim()//+*?^$()[/]{}]
-        .not().matches(/[^a-zA-Z]/).withMessage('Lastname cannot contain anything but digits!')
+        .not().matches(/[^a-zA-Z ]/).withMessage('Lastname cannot contain anything but letters!')
         .bail(),
         check('userName')
         .trim()
@@ -91,10 +92,12 @@ app.put('/api/updateUser/:userId', [
     if (!errors.isEmpty()) {
         return res.status(422).json({ "validationErrors": errors.array() });
     }
+
+     
     userService.updateUserInfo(req.params.userId, req.body)
         .then((msg) => {
             console.log(msg);
-            res.json({"message": msg});
+            res.json( msg);
         })
         .catch((msg) => {
             res.status(422).json({"message": msg});
@@ -240,47 +243,19 @@ app.put('/api/updatePassword/:userId' , [
                         }
                         return true;
                     })
-            ], (req,res) => {
-
-
-
-
-            //console.log("inside post");    
+            ], (req,res) => {  
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(422).json({ "validationErrors": errors.array() });
             }
-            console.log("params.userid: "+ req.params.userId);
-            console.log("req.body: "+req.body);
-            userService.updatePassword(req.params.userId, req.body)
-            .then((successMessage) => {
-                console.log(successMessage)
-                res.json({ "message": successMessage });
-            })
-            .catch((errMessage) => {
-                return res.status(422).json({ "message": errMessage })
-            });
-           /* console.log("req: "+JSON.stringify(req.body.currentUser));
-            console.log("req: "+JSON.stringify(req.body.password));
-            console.log("req: "+JSON.stringify(req.body.password2));
-            console.log("req: "+JSON.stringify(req.body.curPass));
-            
-
-            var jsonString =JSON.stringify(req.body.currentUser);
-            var oldPass = JSON.stringify(req.body.curPass)
-            userService.checkUser2(jsonString,oldPass)
+            var newPass = JSON.stringify(req.body.password);
+            userService.checkUser2(req.body.currentUser, req.body.curPass, newPass)
             .then((user) => {
-                console.log("server js  254: "+user);
                 res.json({user});
             })
             .catch((msg) => {
-                console.log("server js catch 258: "+msg);
                  res.status(400).json({ "message": msg });
             });
-
-            
-    */
-
 });
 
 
