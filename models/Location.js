@@ -30,6 +30,10 @@ var Location = database.define('Location', {
     postal_code: {
         type: Sequelize.STRING(7),
         allowNull: false
+    },
+    EventEventId:{
+        type: Sequelize.INTEGER,
+        allowNull:false
     }
 });
 

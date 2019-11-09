@@ -16,17 +16,9 @@ var app = express();
 app.use(passport.initialize());
 app.use(cors());
 app.use(bodyParser.json());
-//passport.authenticate('jwt', {session: false}),
+
+
 // User routes
-// Example route to see protection of a route using JWT, will be removed
-app.get('/api/users',  (req, res) => {
-    userService.getAllUsers().then((msg) => {
-        res.json({"message": msg});
-    })
-    .catch((msg) => {
-        res.status(422).json({"message": msg});
-    });
-});
 
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
@@ -294,7 +286,7 @@ app.get('/api/event/:event_id', (req, res) => {
 app.get('/api/events', (req, res) => {
     eventService.getAllEvents()
         .then((events) => {
-            res.json({ "events": events });
+            res.json(events);
         })
         .catch((err) => {
             res.status(422).json({ "message": err });
@@ -333,7 +325,7 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             return true;
         }),
     check('date_from')
-        .isAfter().withMessage('Invalid start date entered'),
+        .isAfter().withMessage('You entered a start date that has already passed'),
     check('date_to')
         .custom((value, { req }) => {
             let start = new Date(req.body.date_from);
@@ -383,7 +375,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         .isLength({max: 100}).withMessage('Venue name is too long'),
     check('postal_code')
         .trim()
-        .isPostalCode('CA').withMessage('Invalid postal code entered')
+        .isPostalCode('CA').withMessage('Invalid postal code entered'),
+    check('street_name')
+        .trim()
+        .not().isEmpty().withMessage('Street cannot be empty'),
+    check('city')
+        .trim()
+        .not().isEmpty().withMessage('City cannot be empty')
 ], (req, res) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()){
@@ -400,13 +398,14 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         })
         .then((msg) => {
             res.json({ "message": msg });
+            eventService.sendEventUpdateEmails(req.params.eventId);
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
         });
 });
 
-// This route returns registrations for a given event with their associated user
+// This route returns all registrations for a given event with their associated user
 app.get('/api/event/:eventId/registrationData', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
@@ -425,6 +424,13 @@ app.get('/api/event/:eventId/registrationData', passport.authenticate('general',
         });
 });
 
+// This route returns a single registration for a specific event and user
+app.get('/api/event/:eventId/registration/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getRegistration(req.params.eventId, req.params.userId)
+        .then((registration) => res.json(registration))
+        .catch((err) => res.status(500).json({ "message": err }));
+});
+
 app.get('/api/events/createdEvents/:userId', (req, res) => {
     eventService.getAllEventsByUser(req.params.userId)
         .then((event) => {
@@ -435,6 +441,25 @@ app.get('/api/events/createdEvents/:userId', (req, res) => {
         });
 });
 
+// This route returns a count of all the registrations (registration status is not 'removed') for a given event id
+app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.getRegistrationsWithCount(req.params.eventId)
+        .then((result) => res.json(result.count))
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
+app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    eventService.registerUserForEvent(req.params.eventId, req.params.userId)
+        .then((msg) => {
+            res.json({ "message": msg });
+            eventService.sendEventRegistrationNoticeToOwner(req.params.eventId);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
 
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
@@ -443,7 +468,7 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
                 return Promise.reject('You are not authorized to do this');
             }
             else {
-                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId)
+                return eventService.removeUserFromEvent(req.params.eventId, req.params.userId, foundEvent.event_title)
             }
         })
         .then((msg) => {

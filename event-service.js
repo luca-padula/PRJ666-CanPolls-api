@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
 const mailService = require('./mail-service.js');
+const userService = require('./user-service.js');
 
 const Op = Sequelize.Op;
 
@@ -75,7 +76,8 @@ module.exports.createEvent = function(eventData){
             street_name: eventData.street_name,
             city: eventData.city,
             province: eventData.province,
-            postal_code: eventData.postal_code
+            postal_code: eventData.postal_code,
+            EventEventId: eventData.event_Id
         })
             .then(()=>{
                 Event.findAll({}).then((events)=>{
@@ -105,6 +107,7 @@ module.exports.createEvent = function(eventData){
 }
 
 module.exports.updateEventById = function(eId, uId, eventData) {
+    // TO-DO: Send email to admin of corresponding party requesting approval after updating
     return new Promise((resolve, reject) => {
         Event.update(eventData, {
             where: {
@@ -158,7 +161,7 @@ module.exports.sendEventUpdateEmails = function(eId) {
                         let mailData = {
                             from: mailService.appFromEmailAddress,
                             to: reg.User.email,
-                            subject: 'PRJ666 Canpolls Event Update',
+                            subject: 'PRJ666 CanPolls Event Update',
                             text: mailText
                         };
                         mailService.sendEmail(mailData);
@@ -188,7 +191,105 @@ module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     });
 }
 
-module.exports.removeUserFromEvent = function(eventId, userId) {
+module.exports.getRegistration = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findOne({
+            where: {
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+            }
+        })
+            .then((registration) => resolve(registration))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function returns all registrations (status is not 'removed') for a given event id with a count of all rows returned
+module.exports.getRegistrationsWithCount = function(eventId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findAndCountAll({
+            where: {
+                status: { [Op.not]: 'removed' }
+            }
+        })
+            .then((result) => resolve(result))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.registerUserForEvent = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.findOne({
+            where: {
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+            }
+        })
+            .then((registration) => {
+                if (!registration)
+                    return this.getEventById(eventId);
+                else
+                    return Promise.reject('You have already registered for this event');
+            })
+            .then((event) => {
+                return userService.getUserById(userId);
+            })
+            .then((user) => {
+                if (user)
+                    return EventRegistration.create({
+                        EventEventId: eventId,
+                        UserUserId: userId
+                    });
+                else
+                    return Promise.reject('Invalid user given for registration');
+            })
+            .then(() => resolve('You have successfully registered for this event'))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function sends an email to the owner of a given event id notifying them that
+// a user has registered for their event
+module.exports.sendEventRegistrationNoticeToOwner = function(eventId) {
+    return new Promise((resolve, reject) => {
+        let eventName;
+        this.getEventById(eventId)
+            .then((event) => {
+                eventName = event.event_title;
+                return userService.getUserById(event.UserUserId)
+            })
+            .then((user) => {
+                if (user) {
+                    let mailLink = mailService.appUrl + '\/event\/' + eventId + '\/edit';
+                    let mailText = 'Hello ' + user.firstName + ',\nA user has registered for your event: "' + eventName + '".\n' +
+                        'You can view all the registered users at the link below.\n' + mailLink;
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: user.email,
+                        subject: 'PRJ666 CanPolls Event Update',
+                        text: mailText
+                    };
+                    return mailService.sendEmail(mailData);
+                }
+                else
+                    return reject('Invalid user to send email');
+            })
+            .then(() => resolve())
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
     return new Promise((resolve, reject) => {
         EventRegistration.update({
             status: 'removed'
@@ -212,11 +313,11 @@ module.exports.removeUserFromEvent = function(eventId, userId) {
                     return reject("Invalid user");
                 }
                 let mailText = 'Hello, ' + foundUser.firstName + '\n' +
-                'The administrator of event ' + eventId + ' has chosen to remove you from the event registration';
+                'The owner of event "' + eventName + '" has chosen to remove you from the event registration';
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: foundUser.email,
-                    subject: 'CanPolls Event ' + eventId,
+                    subject: 'PRJ666 CanPolls Event Notice',
                     text: mailText
                 };
                 return mailService.sendEmail(mailData);
