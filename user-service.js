@@ -7,6 +7,20 @@ const mailService = require('./mail-service.js');
 const UserModel = require('./models/User.js');
 let User = UserModel.User;
 
+
+module.exports.getAllUsers = function() {
+    return new Promise((resolve, reject) => {
+        User.findAll({})
+            .then((users) => {
+                resolve(users);
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
+    });
+}
+
 module.exports.getUserById = function(uId) {
     return new Promise((resolve, reject) => {
         User.findOne({
@@ -351,4 +365,26 @@ module.exports.checkUser2 = function (userData, oldPassword, newPassword) {
                 reject(err);
             })
     })
+}
+
+
+//ADMIN ROUTES
+
+module.exports.updUserAccStatus = function(status, foundUserId)
+{
+    return new Promise((resolve, reject) => {
+                //console.log(status+foundUserId);
+                User.update({
+                    accountStatus : status
+                }, {
+                    where: { userId: foundUserId }
+                })
+                .then(() => {
+                        resolve('Status successfully changed');
+                })
+                .catch((err) => {
+                        console.log(err);
+                        reject('Error updating user');
+                 });
+            })
 }

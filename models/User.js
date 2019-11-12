@@ -20,6 +20,11 @@ var User = database.define('User', {
         primaryKey: true,
         autoIncrement: true
     },
+    isAdmin: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
     userName: {
         type: Sequelize.STRING(30),
         allowNull: false,
@@ -47,6 +52,11 @@ var User = database.define('User', {
         defaultValue: false,
         allowNull: false
     },
+    accountStatus: {
+           type: Sequelize.CHAR,
+             defaultValue: 'A',
+             allowNull: false
+    },
     verificationHash: {
         type: Sequelize.STRING(80),
         allowNull: false
@@ -61,7 +71,7 @@ var User = database.define('User', {
         type: Sequelize.INTEGER,
         defaultValue: 0,
         allowNull: false
-    }
+     }
 });
 
 // Can use sequelize to specify relationships between tables

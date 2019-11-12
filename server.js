@@ -20,6 +20,16 @@ app.use(bodyParser.json());
 
 // User routes
 
+app.get('/api/users', (req, res) => {
+    userService.getAllUsers().then((msg) => {
+        res.json(msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
         res.json(msg);
@@ -248,6 +258,23 @@ app.put('/api/updatePassword/:userId' , [
             .catch((msg) => {
                  res.status(400).json({ "message": msg });
             });
+});
+
+
+//ADMIN ROUTES
+
+//UPDATING USER ACCOUNT STATUS  
+app.put('/api/updateAccountStatus/:userId', (req, res) => {
+        //console.log("Req.body.status: "+req.body.accountStatus);
+        //console.log("Req.body.userId: "+req.body.userId);
+    userService.updUserAccStatus(req.body.accountStatus, req.body.userId)
+        .then((msg) => {
+            console.log(msg);
+            res.json( msg);
+        })
+        .catch((msg) => {
+            res.status(422).json({"message": msg});
+        });
 });
 
 
