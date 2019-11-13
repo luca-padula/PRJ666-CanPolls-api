@@ -206,12 +206,12 @@ module.exports.getRegistration = function(eventId, userId) {
     });
 }
 
-// This function returns all registrations (status is not 'removed') for a given event id with a count of all rows returned
+// This function returns all registrations (status is 'registered') for a given event id with a count of all rows returned
 module.exports.getRegistrationsWithCount = function(eventId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAndCountAll({
             where: {
-                status: { [Op.not]: 'removed' }
+                status: 'registered'
             }
         })
             .then((result) => resolve(result))
@@ -229,7 +229,7 @@ module.exports.registerUserForEvent = function(eventId, userId) {
             .then((event) => {
                 theEvent = event
                 let now = new Date();
-                let registrationDeadline= new Date(theEvent.date_from);
+                let registrationDeadline = new Date(theEvent.date_from + ' ' + theEvent.time_from);
                 registrationDeadline.setHours(registrationDeadline.getHours() - 12);
                 if (now < registrationDeadline)
                     return this.getRegistrationsWithCount(eventId);
@@ -338,13 +338,21 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
 
 module.exports.cancelRegistration = function(eventId, userId) {
     return new Promise((resolve, reject) => {
-        EventRegistration.update({
-            status: 'cancelled'
-        }, {
-            where: {
-                [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }]
-            }
-        })
+        this.getEventById(eventId)
+            .then((event) => {
+                let now = new Date();
+                let registrationDeadline = new Date(event.date_from + ' ' + event.time_from);
+                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
+                if (now >= registrationDeadline)
+                    return Promise.reject('It is too late to cancel the registration');
+                return EventRegistration.update({
+                    status: 'cancelled'
+                }, {
+                    where: {
+                        [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }]
+                    }
+                });
+            })
             .then((updatedRegistrations) => {
                 if (updatedRegistrations[0] == 0) {
                     return Promise.reject('No such registration');
