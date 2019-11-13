@@ -20,13 +20,18 @@ var User = database.define('User', {
         primaryKey: true,
         autoIncrement: true
     },
+    isAdmin: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
     userName: {
         type: Sequelize.STRING(30),
         allowNull: false,
         unique: true
     },
     email: {
-        type: Sequelize.STRING(50),
+        type: Sequelize.STRING(64),
         allowNull: false,
         unique: true
     },
@@ -36,22 +41,33 @@ var User = database.define('User', {
     },
     firstName: {
         type: Sequelize.STRING(50),
-        allowNull: false
+        allowNull: false,
+        defaultValue: ''
     },
     lastName: {
         type: Sequelize.STRING(50),
-        allowNull: false
+        allowNull: false,
+        defaultValue: ''
     },
     isVerified: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: false
     },
+    accountStatus: {
+           type: Sequelize.CHAR,
+             defaultValue: 'A',
+             allowNull: false
+    },
     verificationHash: {
         type: Sequelize.STRING(80),
         allowNull: false
     },
-    partyAffiliation: Sequelize.STRING(50),
+    partyAffiliation: {
+        type: Sequelize.STRING(50),
+        allowNull: false,
+        defaultValue: 'unaffiliated'
+    },
     affiliationApproved: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
@@ -61,7 +77,7 @@ var User = database.define('User', {
         type: Sequelize.INTEGER,
         defaultValue: 0,
         allowNull: false
-    }
+     }
 });
 
 // Can use sequelize to specify relationships between tables

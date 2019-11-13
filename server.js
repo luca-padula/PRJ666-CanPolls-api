@@ -20,6 +20,16 @@ app.use(bodyParser.json());
 
 // User routes
 
+app.get('/api/users', (req, res) => {
+    userService.getAllUsers().then((msg) => {
+        res.json(msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
         res.json(msg);
@@ -128,6 +138,12 @@ app.post('/api/register', [
                 return Promise.reject(msg);
             });
         }),
+    check('firstName')
+        .isEmpty().withMessage('First name cannot be empty')
+        .isLength({ max: 50 }).withMessage('First name is too long'),
+    check('lastName')
+        .isEmpty().withMessage('Last name cannot be empty')
+        .isLength({ max: 50 }).withMessage('Last name is too long'),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
         .matches(/\d/).withMessage('Password must contain a number')
@@ -248,6 +264,23 @@ app.put('/api/updatePassword/:userId' , [
             .catch((msg) => {
                  res.status(400).json({ "message": msg });
             });
+});
+
+
+//ADMIN ROUTES
+
+//UPDATING USER ACCOUNT STATUS  
+app.put('/api/updateAccountStatus/:userId', (req, res) => {
+        //console.log("Req.body.status: "+req.body.accountStatus);
+        //console.log("Req.body.userId: "+req.body.userId);
+    userService.updUserAccStatus(req.body.accountStatus, req.body.userId)
+        .then((msg) => {
+            console.log(msg);
+            res.json( msg);
+        })
+        .catch((msg) => {
+            res.status(422).json({"message": msg});
+        });
 });
 
 

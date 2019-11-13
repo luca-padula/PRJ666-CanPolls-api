@@ -49,10 +49,6 @@ var Event = database.define('Event', {
     isApproved:{
         type:Sequelize.BOOLEAN,
         allowNull:false
-    },
-    UserUserId:{
-        type:Sequelize.STRING,
-        allowNull:false
     }
 });
 

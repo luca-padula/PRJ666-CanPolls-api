@@ -1,5 +1,3 @@
-
-
 const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
 
@@ -30,10 +28,6 @@ var Location = database.define('Location', {
     postal_code: {
         type: Sequelize.STRING(7),
         allowNull: false
-    },
-    EventEventId:{
-        type: Sequelize.INTEGER,
-        allowNull:false
     }
 });
 
