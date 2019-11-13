@@ -23,7 +23,7 @@ var Event = database.define('Event', {
         allowNull: false
     },
     photo:{
-        type: Sequelize.STRING,
+        type: Sequelize.BLOB,
         allowNull: false
     },
     date_from:{

@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
 const mailService = require('./mail-service.js');
 const userService = require('./user-service.js');
-
+const fs = require('fs');
 const Op = Sequelize.Op;
 
 const EventModel = require('./models/Event.js');
@@ -63,6 +63,7 @@ module.exports.createEvent = function(eventData){
         Event.create({
             event_title: eventData.event_title,
             event_description: eventData.event_description,
+            photo: fs.readFileSync(eventData.photo),
             date_from: eventData.date_from,
             date_to: eventData.date_to,
             time_from: eventData.time_from,
@@ -70,15 +71,15 @@ module.exports.createEvent = function(eventData){
             attendee_limit: eventData.attendee_limit,
             isApproved: false,
             UserUserId: eventData.userId
-        }), 
+        }).then((createdEvent)=>{
         Location.create({
             venue_name: eventData.venue_name,
             street_name: eventData.street_name,
             city: eventData.city,
             province: eventData.province,
             postal_code: eventData.postal_code,
-            EventEventId: eventData.event_Id
-        })
+            EventEventId: createdEvent.event_id
+        })})
             .then(()=>{
                 Event.findAll({}).then((events)=>{
 
