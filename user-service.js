@@ -117,7 +117,7 @@ module.exports.registerUser = function(userData) {
                 return mailService.sendEmail(mailData);
             })
             .then(() => resolve('User ' + userData.userName + ' successfully registered'))
-            .catch((msg) => reject('Error sending verification email'));
+            .catch((msg) => reject(msg));
     });
 }
 

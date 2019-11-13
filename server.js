@@ -138,6 +138,12 @@ app.post('/api/register', [
                 return Promise.reject(msg);
             });
         }),
+    check('firstName')
+        .isEmpty().withMessage('First name cannot be empty')
+        .isLength({ max: 50 }).withMessage('First name is too long'),
+    check('lastName')
+        .isEmpty().withMessage('Last name cannot be empty')
+        .isLength({ max: 50 }).withMessage('Last name is too long'),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
         .matches(/\d/).withMessage('Password must contain a number')
