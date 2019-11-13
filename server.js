@@ -139,10 +139,10 @@ app.post('/api/register', [
             });
         }),
     check('firstName')
-        .isEmpty().withMessage('First name cannot be empty')
+        .not().isEmpty().withMessage('First name cannot be empty')
         .isLength({ max: 50 }).withMessage('First name is too long'),
     check('lastName')
-        .isEmpty().withMessage('Last name cannot be empty')
+        .not().isEmpty().withMessage('Last name cannot be empty')
         .isLength({ max: 50 }).withMessage('Last name is too long'),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
@@ -187,7 +187,8 @@ app.post('/api/login', (req, res) => {
             var payload = {
                 userId: user.userId,
                 userName: user.userName,
-                email: user.email
+                email: user.email,
+                isAdmin: user.isAdmin
             };
             var token = jwt.sign(payload, jwtConfig.secret);
             res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
@@ -504,6 +505,18 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
                 return eventService.removeUserFromEvent(req.params.eventId, req.params.userId, foundEvent.event_title)
             }
         })
+        .then((msg) => {
+            res.json({ "message": msg });
+        })
+        .catch((err) => {
+            res.status(500).json({ "message": err });
+        });
+});
+
+app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    if (req.user.userId != req.params.userId)
+        return res.json({"message": 'You are not authorized to do this'});
+    eventService.cancelRegistration(req.params.eventId, req.params.userId)
         .then((msg) => {
             res.json({ "message": msg });
         })

@@ -336,6 +336,28 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
     });
 }
 
+module.exports.cancelRegistration = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        EventRegistration.update({
+            status: 'cancelled'
+        }, {
+            where: {
+                [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }]
+            }
+        })
+            .then((updatedRegistrations) => {
+                if (updatedRegistrations[0] == 0) {
+                    return Promise.reject('No such registration');
+                }
+                resolve('You have successfully cancelled your registration');
+            })
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
 module.exports.approveEvent = function(event_id, data){
     return new Promise((resolve,reject)=>{
         Event.findOne( {
