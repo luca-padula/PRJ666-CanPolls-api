@@ -223,19 +223,25 @@ module.exports.getRegistrationsWithCount = function(eventId) {
 }
 
 module.exports.registerUserForEvent = function(eventId, userId) {
+    let theEvent;
     return new Promise((resolve, reject) => {
-        EventRegistration.findOne({
-            where: {
-                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
-            }
-        })
-            .then((registration) => {
-                if (!registration)
-                    return this.getEventById(eventId);
-                else
-                    return Promise.reject('You have already registered for this event');
-            })
+        this.getEventById(eventId)
             .then((event) => {
+                theEvent = event
+                let now = new Date();
+                let registrationDeadline= new Date(theEvent.date_from);
+                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
+                if (now < registrationDeadline)
+                    return this.getRegistrationsWithCount(eventId);
+                else
+                    return Promise.reject('It is too late to register for this event');
+            })
+            .then((registrations) => {
+                if (theEvent.attendee_limit != 0 && registrations.count >= theEvent.attendee_limit)
+                    return Promise.reject('This event is already full');
+                let alreadyRegistered = registrations.rows.find((reg) => reg.UserUserId == userId);
+                if (alreadyRegistered)
+                    return Promise.reject('You have already registered for this event');
                 return userService.getUserById(userId);
             })
             .then((user) => {
