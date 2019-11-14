@@ -117,7 +117,7 @@ module.exports.registerUser = function(userData) {
                 return mailService.sendEmail(mailData);
             })
             .then(() => resolve('User ' + userData.userName + ' successfully registered'))
-            .catch((msg) => reject('Error sending verification email'));
+            .catch((msg) => reject(msg));
     });
 }
 
@@ -212,6 +212,9 @@ module.exports.checkUser = function (userData) {
                 }
                 if (!foundUser.isVerified) {
                     return reject('You need to verify your account before you can log in. Check your email for the link.')
+                }
+                if (foundUser.accountStatus == 'B') {
+                    return Promise.reject('Your account has been banned');
                 }
                 return bcrypt.compare(userData.password, foundUser.password);
             })

@@ -31,7 +31,7 @@ var User = database.define('User', {
         unique: true
     },
     email: {
-        type: Sequelize.STRING(50),
+        type: Sequelize.STRING(64),
         allowNull: false,
         unique: true
     },
@@ -41,11 +41,13 @@ var User = database.define('User', {
     },
     firstName: {
         type: Sequelize.STRING(50),
-        allowNull: false
+        allowNull: false,
+        defaultValue: ''
     },
     lastName: {
         type: Sequelize.STRING(50),
-        allowNull: false
+        allowNull: false,
+        defaultValue: ''
     },
     isVerified: {
         type: Sequelize.BOOLEAN,
@@ -62,8 +64,9 @@ var User = database.define('User', {
         allowNull: false
     },
     partyAffiliation: {
-       type: Sequelize.STRING(50),
-       allowNull:false
+        type: Sequelize.STRING(50),
+        allowNull: false,
+        defaultValue: 'unaffiliated'
     },
     affiliationApproved: {
         type: Sequelize.BOOLEAN,

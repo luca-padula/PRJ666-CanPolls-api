@@ -206,12 +206,12 @@ module.exports.getRegistration = function(eventId, userId) {
     });
 }
 
-// This function returns all registrations (status is not 'removed') for a given event id with a count of all rows returned
+// This function returns all registrations (status is 'registered') for a given event id with a count of all rows returned
 module.exports.getRegistrationsWithCount = function(eventId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAndCountAll({
             where: {
-                status: { [Op.not]: 'removed' }
+                status: 'registered'
             }
         })
             .then((result) => resolve(result))
@@ -223,19 +223,25 @@ module.exports.getRegistrationsWithCount = function(eventId) {
 }
 
 module.exports.registerUserForEvent = function(eventId, userId) {
+    let theEvent;
     return new Promise((resolve, reject) => {
-        EventRegistration.findOne({
-            where: {
-                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
-            }
-        })
-            .then((registration) => {
-                if (!registration)
-                    return this.getEventById(eventId);
-                else
-                    return Promise.reject('You have already registered for this event');
-            })
+        this.getEventById(eventId)
             .then((event) => {
+                theEvent = event
+                let now = new Date();
+                let registrationDeadline = new Date(theEvent.date_from + ' ' + theEvent.time_from);
+                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
+                if (now < registrationDeadline)
+                    return this.getRegistrationsWithCount(eventId);
+                else
+                    return Promise.reject('It is too late to register for this event');
+            })
+            .then((registrations) => {
+                if (theEvent.attendee_limit != 0 && registrations.count >= theEvent.attendee_limit)
+                    return Promise.reject('This event is already full');
+                let alreadyRegistered = registrations.rows.find((reg) => reg.UserUserId == userId);
+                if (alreadyRegistered)
+                    return Promise.reject('You have already registered for this event');
                 return userService.getUserById(userId);
             })
             .then((user) => {
@@ -326,6 +332,36 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
             .catch((err) => {
                 console.log(err);
                 reject('Error removing user');
+            });
+    });
+}
+
+module.exports.cancelRegistration = function(eventId, userId) {
+    return new Promise((resolve, reject) => {
+        this.getEventById(eventId)
+            .then((event) => {
+                let now = new Date();
+                let registrationDeadline = new Date(event.date_from + ' ' + event.time_from);
+                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
+                if (now >= registrationDeadline)
+                    return Promise.reject('It is too late to cancel the registration');
+                return EventRegistration.update({
+                    status: 'cancelled'
+                }, {
+                    where: {
+                        [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }]
+                    }
+                });
+            })
+            .then((updatedRegistrations) => {
+                if (updatedRegistrations[0] == 0) {
+                    return Promise.reject('No such registration');
+                }
+                resolve('You have successfully cancelled your registration');
+            })
+            .catch((err) => {
+                console.log(err);
+                reject(err);
             });
     });
 }
