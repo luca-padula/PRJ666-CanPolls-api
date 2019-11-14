@@ -103,21 +103,35 @@ module.exports.registerUser = function(userData) {
                 userData.verificationHash = randomHash;
                 return User.create(userData);
             })
-            .then((createdUser) => {
-                let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
-                    '\/' + createdUser.verificationHash;
-                let mailText = 'Hello ' + createdUser.firstName + ',\nthank you for registering with Canpolls. ' +
-                    'Please click the link below to verify your account.\n' + mailLink;
-                let mailData = {
-                    from: mailService.appFromEmailAddress,
-                    to: createdUser.email,
-                    subject: 'PRJ666 Canpolls Account Verification',
-                    text: mailText
-                };
-                return mailService.sendEmail(mailData);
-            })
-            .then(() => resolve('User ' + userData.userName + ' successfully registered'))
-            .catch((msg) => reject(msg));
+            .then((createdUser) => resolve({
+                msg: 'User ' + createdUser.userName + ' successfully registered',
+                user: createdUser
+            }))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.sendAccountVerificationEmail = function(user) {
+    return new Promise((resolve, reject) => {
+        let mailLink = mailService.appUrl + '\/verifyEmail\/' + user.userId +
+            '\/' + user.verificationHash;
+        let mailText = 'Hello ' + user.firstName + ',\nthank you for registering with CanPolls. ' +
+            'Please click the link below to verify your account.\n' + mailLink;
+        let mailData = {
+            from: mailService.appFromEmailAddress,
+            to: user.email,
+            subject: 'PRJ666 CanPolls Account Verification',
+            text: mailText
+        };
+        mailService.sendEmail(mailData)
+            .then(() => resolve('Successfully sent verificaion email to ' + user.email))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
     });
 }
 

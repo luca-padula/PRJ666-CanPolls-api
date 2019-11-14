@@ -153,24 +153,28 @@ module.exports.sendEventUpdateEmails = function(eId) {
     return new Promise((resolve, reject) => {
         this.getRegistrationsWithUsersByEventId(eId)
             .then((registrations) => {
-                registrations.forEach((reg) => {
-                    if (reg.status != 'removed') {
-                        let mailLink = mailService.appUrl + '\/event\/' + eId + '\/edit';
-                        let mailText = 'Hello ' + reg.User.firstName + ',\nAn event for which you are registered has been updated. ' +
+                for (let i = 0; i < registrations.length; ++i) {
+                    if (registrations[i].status == 'registered') {
+                        let mailLink = mailService.appUrl + '\/event\/' + eId;
+                        let mailText = 'Hello ' + registrations[i].User.firstName + ',\nAn event for which you are registered has been updated. ' +
                             'You can view the updated event at the link below.\n' + mailLink;
                         let mailData = {
                             from: mailService.appFromEmailAddress,
-                            to: reg.User.email,
+                            to: registrations[i].User.email,
                             subject: 'PRJ666 CanPolls Event Update',
                             text: mailText
                         };
-                        mailService.sendEmail(mailData);
+                        mailService.sendEmail(mailData)
+                            .then(() => console.log('Successfully sent event update email to user ' + registrations[i].User.userName))
+                            .catch((err) => console.log('Failed to send event update email to user ' + registrations[i].User.userName, err));
                     }
-                });
+                }
+                return 'Sending event update emails';
             })
+            .then((msg) => resolve(msg))
             .catch((err) => {
                 console.log(err);
-                reject('Error getting registrations');
+                reject(err);
             });
     });
 }
@@ -261,21 +265,52 @@ module.exports.registerUserForEvent = function(eventId, userId) {
     });
 }
 
-// This function sends an email to the owner of a given event id notifying them that
-// a user has registered for their event
-module.exports.sendEventRegistrationNoticeToOwner = function(eventId) {
+module.exports.cancelRegistration = function(eventId, userId) {
     return new Promise((resolve, reject) => {
-        let eventName;
         this.getEventById(eventId)
             .then((event) => {
-                eventName = event.event_title;
+                let now = new Date();
+                let registrationDeadline = new Date(event.date_from + ' ' + event.time_from);
+                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
+                if (now >= registrationDeadline)
+                    return Promise.reject('It is too late to cancel the registration');
+                return EventRegistration.update({
+                    status: 'cancelled'
+                }, {
+                    where: {
+                        [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }, { status: 'registered' }]
+                    }
+                });
+            })
+            .then((updatedRegistrations) => {
+                if (updatedRegistrations[0] == 0) {
+                    return Promise.reject('No such registration, or you have already cancelled');
+                }
+                resolve('You have successfully cancelled your registration');
+            })
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function sends an email to the owner of a given event id notifying them that
+// a user has registered for their event
+module.exports.sendEventRegistrationNoticeToOwner = function(eventId, updateType) {
+    return new Promise((resolve, reject) => {
+        let theEvent;
+        this.getEventById(eventId)
+            .then((event) => {
+                theEvent = event;
                 return userService.getUserById(event.UserUserId)
             })
             .then((user) => {
                 if (user) {
                     let mailLink = mailService.appUrl + '\/event\/' + eventId + '\/edit';
-                    let mailText = 'Hello ' + user.firstName + ',\nA user has registered for your event: "' + eventName + '".\n' +
-                        'You can view all the registered users at the link below.\n' + mailLink;
+                    let mailText = 'Hello ' + user.firstName + ',\nA user has ' + updateType
+                        + ' for your event: "' + theEvent.event_title + '".\n'
+                        + 'You can view all the registered users at the link below.\n' + mailLink;
                     let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: user.email,
@@ -287,7 +322,7 @@ module.exports.sendEventRegistrationNoticeToOwner = function(eventId) {
                 else
                     return reject('Invalid user to send email');
             })
-            .then(() => resolve())
+            .then(() => resolve('Successfully sent registration update to event owner'))
             .catch((err) => {
                 console.log(err);
                 reject(err);
@@ -332,36 +367,6 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
             .catch((err) => {
                 console.log(err);
                 reject('Error removing user');
-            });
-    });
-}
-
-module.exports.cancelRegistration = function(eventId, userId) {
-    return new Promise((resolve, reject) => {
-        this.getEventById(eventId)
-            .then((event) => {
-                let now = new Date();
-                let registrationDeadline = new Date(event.date_from + ' ' + event.time_from);
-                registrationDeadline.setHours(registrationDeadline.getHours() - 12);
-                if (now >= registrationDeadline)
-                    return Promise.reject('It is too late to cancel the registration');
-                return EventRegistration.update({
-                    status: 'cancelled'
-                }, {
-                    where: {
-                        [Op.and]: [{ EventEventId: eventId }, { UserUserId: userId }]
-                    }
-                });
-            })
-            .then((updatedRegistrations) => {
-                if (updatedRegistrations[0] == 0) {
-                    return Promise.reject('No such registration');
-                }
-                resolve('You have successfully cancelled your registration');
-            })
-            .catch((err) => {
-                console.log(err);
-                reject(err);
             });
     });
 }

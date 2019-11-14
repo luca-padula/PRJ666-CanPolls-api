@@ -163,11 +163,14 @@ app.post('/api/register', [
         return res.status(422).json({ "validationErrors": errors.array() });
     }
     userService.registerUser(req.body)
-        .then((msg) => {
-            res.json({"message": msg});
+        .then((result) => {
+            res.json({"message": result.msg}).end();
+            return userService.sendAccountVerificationEmail(result.user);
         })
-        .catch((msg) => {
-            res.status(500).json({"message": msg});
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({"message": err});
         });
 });
 
@@ -429,8 +432,8 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         .isAfter().withMessage('You entered a start date that has already passed'),
     check('date_to')
         .custom((value, { req }) => {
-            let start = new Date(req.body.date_from);
-            let end = new Date(value);
+            let start = new Date(req.body.date_from + ' ' + req.body.time_from);
+            let end = new Date(value + ' ' + req.body.time_to);
             if (start >= end) {
                 throw new Error('Invalid end date entered');
             }
@@ -451,11 +454,13 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             }
         })
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventUpdateEmails(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventUpdateEmails(req.params.eventId);
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(500).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -498,11 +503,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
             }
         })
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventUpdateEmails(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventUpdateEmails(req.params.eventId);
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(500).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -554,11 +561,13 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
 app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.registerUserForEvent(req.params.eventId, req.params.userId)
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventRegistrationNoticeToOwner(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'registered');
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(422).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -585,10 +594,13 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
         return res.json({"message": 'You are not authorized to do this'});
     eventService.cancelRegistration(req.params.eventId, req.params.userId)
         .then((msg) => {
-            res.json({ "message": msg });
+            res.json({ "message": msg }).end();
+            return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'cancelled');
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(500).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 

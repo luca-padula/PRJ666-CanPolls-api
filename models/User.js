@@ -31,7 +31,7 @@ var User = database.define('User', {
         unique: true
     },
     email: {
-        type: Sequelize.STRING(64),
+        type: Sequelize.STRING(80),
         allowNull: false,
         unique: true
     },
