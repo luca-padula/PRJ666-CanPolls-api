@@ -14,7 +14,9 @@ var strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
         next(null, {
             userId: jwt_payload.userId,
             userName: jwt_payload.userName,
-            email: jwt_payload.email
+            email: jwt_payload.email,
+            isAdmin: jwt_payload.isAdmin,
+            partyAffiliation: jwt_payload.partyAffiliation
         });
     }
     else {

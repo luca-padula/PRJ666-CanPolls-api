@@ -368,6 +368,74 @@ module.exports.checkUser2 = function (userData, oldPassword, newPassword) {
 }
 
 
+module.exports.deleteUser = function (userID)
+{
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: userID
+            }
+        })
+        .then((user) => {
+            var foundUserEmail = user.email;
+            var foundUserFname = user.firstName;
+            User.update({
+                userName : "deletedUser"+user.userId,
+                email: "deletedUser"+user.userId+"@senecacollege.ca",
+                firstName: "Deleted",
+                lastName: "User"+user.userId,
+                isVerified: 0,
+                accountStatus : 'B',
+                partyAffiliation : 'unaffiliated',
+                affiliationApproved : 0,
+                rejectionCount : 0
+            }, {
+                where: { userId: user.userId }
+            })
+            let mailText = 'Hello ' + foundUserFname + ',\nAs per your request, ' +
+            'your account has been deleted. Thanks for being a part of CanPolls. You can SignUp again anytime.\n\n' +
+            'We hope to see you soon\n\n'+
+            'Best.\nCanPolls Team';
+            let mailData = {
+            from: mailService.appFromEmailAddress,
+            to: foundUserEmail,
+            subject: 'PRJ666 CanPolls - We are sad to See You Go',
+            text: mailText
+            };
+
+            mailService.sendEmail(mailData)
+            .then(() => {
+                resolve();
+            })
+            .catch((msg) => {
+                console.log(msg);
+                reject('Error sending email');
+            });
+        })
+        .catch((err) => {
+            reject('An error occured');
+        })
+    });
+}
+
+
+module.exports.getAllUsersByParty = function(partyName) {
+    return new Promise((resolve, reject) => {
+        User.findAll({
+            where: {
+            partyAffiliation: partyName
+                }
+        })
+            .then((users) => {
+                resolve(users);
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
+    });
+}
+
 //ADMIN ROUTES
 
 module.exports.updUserAccStatus = function(status, foundUserId)
@@ -380,7 +448,82 @@ module.exports.updUserAccStatus = function(status, foundUserId)
                     where: { userId: foundUserId }
                 })
                 .then(() => {
+                        if(status == "A")
+                        {
+                            User.update({
+                                rejectionCount : 0
+                            }, {
+                                where: { userId: foundUserId }
+                            }).then( console.log('Rejection Count set to 0'))
+                            .catch((err) => {
+                                console.log(err);
+                                reject('Error changing rejection count user');
+                            });
+
+                        }
                         resolve('Status successfully changed');
+                })
+                .catch((err) => {
+                        console.log(err);
+                        reject('Error updating user');
+                 });
+            })
+}
+
+module.exports.updUserAffStatus = function(status, foundUser)
+{
+    return new Promise((resolve, reject) => {
+                User.update({
+                    affiliationApproved : status
+                }, {
+                    where: { userId: foundUser.userId }
+                })
+                .then(() => {
+                    let mailText = '';
+                    let subjectLine = ''
+                    let partyName = foundUser.partyAffiliation[0].toUpperCase()+foundUser.partyAffiliation.substring(1);
+                    if(status == "true")
+                    {
+                        subjectLine = 'PRJ66 CanPolls - Welcome to The '+partyName;
+                        mailText = 'Hello '+foundUser.firstName+',\n\n' +
+                        'This is the administrator of the CanPolls\'s ' +partyName+'. I am delighted to have you as a part of our team.'+
+                        ' You are now eligle to create Events but they will have to be "Approved" by the team.' +
+                        '\n\n'+
+                        'All Events are monitored by the Administrators. ' +
+                        'Remember, submitting an offensive event can cause a permanent BAN from the website.'+
+                        '\n\nBest.\nCanPolls Team';
+                        console.log("affiliation approved")
+                    }
+                    else
+                    {
+                        console.log("affiliation rejected")
+                        subjectLine = 'PRJ66 CanPolls - You Recent Request to Join '+partyName;
+                        mailText = 'Hello '+foundUser.firstName+',\n\n' +
+                        'I am sorry to let you know that your recent request '+
+                        'to be a part of '+partyName+' has been declined by our Administrator.' +
+                        '\n\n'+
+                        'Please send an email at prj666_193a03@myseneca.ca to know further details.' +
+                        ' I wish you all the very best for your future endeavors. Thanks for using CanPolls.'+
+                        '\n\nBest.\nCanPolls Team';
+                    }
+
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: foundUser.email,
+                        subject: subjectLine,
+                        text: mailText
+                        };
+            
+                       mailService.sendEmail(mailData)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch((msg) => {
+                            console.log(msg);
+                            reject('Error sending email');
+                        });
+                    
+                    resolve('Affiliation successfully changed');
                 })
                 .catch((err) => {
                         console.log(err);

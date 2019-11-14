@@ -61,7 +61,10 @@ var User = database.define('User', {
         type: Sequelize.STRING(80),
         allowNull: false
     },
-    partyAffiliation: Sequelize.STRING(50),
+    partyAffiliation: {
+       type: Sequelize.STRING(50),
+       allowNull:false
+    },
     affiliationApproved: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,

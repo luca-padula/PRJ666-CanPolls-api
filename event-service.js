@@ -402,3 +402,33 @@ module.exports.getAllEventsByUser = function(userId){
         })
     });
 }
+
+module.exports.getAllEventsWithUser = function() {
+    return new Promise((resolve, reject) => {
+        Event.findAll({
+            include: [User],
+        })
+            .then((events) => {
+                resolve(events);
+            })
+            .catch((err) => {
+                reject('An error occured');
+            });
+    });
+}
+
+
+module.exports.updateEventStatus = function(eventId, statusVal)
+{
+    return new Promise((resolve, reject) => {
+    Event.findAll({
+        include: [User],
+    })
+        .then((events) => {
+            resolve(events);
+        })
+        .catch((err) => {
+            reject('An error occured');
+        });
+});
+}

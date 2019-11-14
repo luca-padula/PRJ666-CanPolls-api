@@ -181,7 +181,9 @@ app.post('/api/login', (req, res) => {
             var payload = {
                 userId: user.userId,
                 userName: user.userName,
-                email: user.email
+                email: user.email,
+                isAdmin: user.isAdmin,
+                partyAffiliation: user.partyAffiliation
             };
             var token = jwt.sign(payload, jwtConfig.secret);
             res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
@@ -260,6 +262,32 @@ app.put('/api/updatePassword/:userId' , [
             });
 });
 
+app.put('/api/deleteUser/:userId', (req,res) =>
+{
+    console.log("Req.params.userId: "+req.params.userId);
+    console.log("Req.body: "+req.body);
+    userService.deleteUser(req.params.userId)
+    .then((msg) => {
+        console.log(msg);
+        res.json( msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
+app.get('/api/usersByParty/:partyName', (req, res) => {
+    console.log(req.params.partyName);
+    userService.getAllUsersByParty(req.params.partyName).then((msg) => {
+        res.json(msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
 
 //ADMIN ROUTES
 
@@ -275,6 +303,35 @@ app.put('/api/updateAccountStatus/:userId', (req, res) => {
         .catch((msg) => {
             res.status(422).json({"message": msg});
         });
+});
+
+//UPDATING USER affiliation STATUS  
+app.put('/api/updateAffiliationStatus/:userId', (req, res) => {
+   // console.log(req.body);
+    userService.updUserAffStatus(req.body.affiliationApproved, req.body)
+    .then((msg) => {
+        console.log(msg);
+        res.json( msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
+//UPDATING EVENT STATUS
+app.put('/api/updateEventStatus/:eventId',  (req,res) => 
+{ 
+    console.log("Eventid: "+req.params.eventId);
+   // console.log("Event body : "+ JSON.stringify(req.body));
+    eventService.approveEvent(req.params.eventId, req.body)
+   
+    .then((successMessage) => {
+        res.json({ "message": successMessage });
+    })
+    .catch((errMessage) => {
+        res.status(422).json({ "message": errMessage })
+    });
 });
 
 
@@ -319,6 +376,17 @@ app.get('/api/events', (req, res) => {
             res.status(422).json({ "message": err });
         });
 });
+
+app.get('/api/eventsUser', (req, res) => {
+    eventService.getAllEventsWithUser()
+        .then((events) => {
+            res.json(events);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 app.post('/api/event/:event_id', passport.authenticate('general', {session: false}), [ check('userId')
 .equals('27').withMessage('You are not authorized to approve this')
 ], (req, res)=>{
