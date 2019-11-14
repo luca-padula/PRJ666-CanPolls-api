@@ -174,6 +174,19 @@ app.post('/api/register', [
         });
 });
 
+app.post('/api/resendVerificationEmail', (req, res) => {
+    userService.resetVerificationHash(req.body.userName)
+        .then((result) => {
+            res.json({ "message": result.msg }).end();
+            return userService.sendAccountVerificationEmail(result.user);
+        })
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({"message": err});
+        });
+});
+
 app.post('/api/verifyEmail/:userId/:token', (req, res) => {
     userService.verifyUser(req.params.userId, req.params.token)
         .then((msg) => {

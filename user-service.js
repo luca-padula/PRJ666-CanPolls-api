@@ -99,7 +99,7 @@ module.exports.registerUser = function(userData) {
             .then((hash) => {
                 userData.password = hash;
                 let randomString = crypto.randomBytes(32).toString('hex');
-                let randomHash = bcrypt.hashSync(randomString, 10).replace(/\//g, '');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace(/[^a-zA-Z\d]/g, '');
                 userData.verificationHash = randomHash;
                 return User.create(userData);
             })
@@ -127,7 +127,48 @@ module.exports.sendAccountVerificationEmail = function(user) {
             text: mailText
         };
         mailService.sendEmail(mailData)
-            .then(() => resolve('Successfully sent verificaion email to ' + user.email))
+            .then(() => resolve('Successfully sent verification email to ' + user.email))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function accepts a user's userName or email and gives them a new verification hash
+// to be sent to the user to verify their account
+module.exports.resetVerificationHash = function(userNameOrEmail) {
+    return new Promise((resolve, reject) => {
+        let foundUser;
+        this.findUserByUsername(userNameOrEmail)
+            .then((result) => {
+                if (result) {
+                    foundUser = result;
+                    return true;
+                }
+                else {
+                    return this.findUserByEmail(userNameOrEmail);
+                }
+            })
+            .then((foundByEmail) => {
+                if (!foundUser) {
+                    if (foundByEmail) {
+                        foundUser = foundByEmail;
+                    }
+                    else {
+                        return reject('User does not exist');
+                    }
+                }
+                let randomString = crypto.randomBytes(32).toString('hex');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace(/[^a-zA-Z\d]/g, '');
+                foundUser.verificationHash = randomHash;
+                return User.update({
+                    verificationHash: randomHash
+                }, {
+                    where: { userId: foundUser.userId }
+                });
+            })
+            .then(() => resolve({ msg: 'Successfully updated verificationHash', user: foundUser }))
             .catch((err) => {
                 console.log(err);
                 reject(err);
@@ -224,16 +265,16 @@ module.exports.checkUser = function (userData) {
                         return reject('Incorrect email, username, or password entered');
                     }
                 }
-                if (!foundUser.isVerified) {
-                    return reject('You need to verify your account before you can log in. Check your email for the link.')
-                }
-                if (foundUser.accountStatus == 'B') {
-                    return Promise.reject('Your account has been banned');
-                }
                 return bcrypt.compare(userData.password, foundUser.password);
             })
             .then((passwordsMatch) => {
                 if (passwordsMatch) {
+                    if (!foundUser.isVerified) {
+                        return reject('You need to verify your account before you can log in. Check your email for the link.')
+                    }
+                    if (foundUser.accountStatus == 'B') {
+                        return Promise.reject('Your account has been banned');
+                    }
                     resolve(foundUser);
                 }
                 else {
