@@ -63,7 +63,7 @@ module.exports.createEvent = function(eventData){
         Event.create({
             event_title: eventData.event_title,
             event_description: eventData.event_description,
-            photo: fs.readFileSync(eventData.photo),
+            photo: eventData.photo,
             date_from: eventData.date_from,
             date_to: eventData.date_to,
             time_from: eventData.time_from,
