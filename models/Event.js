@@ -19,7 +19,7 @@ var Event = database.define('Event', {
         allowNull: false,
     },
     event_description: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(500),
         allowNull: false
     },
     date_from:{
