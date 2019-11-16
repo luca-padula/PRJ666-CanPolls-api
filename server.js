@@ -139,10 +139,10 @@ app.post('/api/register', [
             });
         }),
     check('firstName')
-        .isEmpty().withMessage('First name cannot be empty')
+        .not().isEmpty().withMessage('First name cannot be empty')
         .isLength({ max: 50 }).withMessage('First name is too long'),
     check('lastName')
-        .isEmpty().withMessage('Last name cannot be empty')
+        .not().isEmpty().withMessage('Last name cannot be empty')
         .isLength({ max: 50 }).withMessage('Last name is too long'),
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
@@ -163,11 +163,27 @@ app.post('/api/register', [
         return res.status(422).json({ "validationErrors": errors.array() });
     }
     userService.registerUser(req.body)
-        .then((msg) => {
-            res.json({"message": msg});
+        .then((result) => {
+            res.json({"message": result.msg}).end();
+            return userService.sendAccountVerificationEmail(result.user);
         })
-        .catch((msg) => {
-            res.status(500).json({"message": msg});
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({"message": err});
+        });
+});
+
+app.post('/api/resendVerificationEmail', (req, res) => {
+    userService.resetVerificationHash(req.body.userName)
+        .then((result) => {
+            res.json({ "message": result.msg }).end();
+            return userService.sendAccountVerificationEmail(result.user);
+        })
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({"message": err});
         });
 });
 
@@ -187,7 +203,9 @@ app.post('/api/login', (req, res) => {
             var payload = {
                 userId: user.userId,
                 userName: user.userName,
-                email: user.email
+                email: user.email,
+                isAdmin: user.isAdmin,
+                partyAffiliation: user.partyAffiliation
             };
             var token = jwt.sign(payload, jwtConfig.secret);
             res.json({ "message": "Successfully logged in as user: " + user.userName, "token": token });
@@ -266,6 +284,32 @@ app.put('/api/updatePassword/:userId' , [
             });
 });
 
+app.put('/api/deleteUser/:userId', (req,res) =>
+{
+    console.log("Req.params.userId: "+req.params.userId);
+    console.log("Req.body: "+req.body);
+    userService.deleteUser(req.params.userId)
+    .then((msg) => {
+        console.log(msg);
+        res.json( msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
+app.get('/api/usersByParty/:partyName', (req, res) => {
+    console.log(req.params.partyName);
+    userService.getAllUsersByParty(req.params.partyName).then((msg) => {
+        res.json(msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
 
 //ADMIN ROUTES
 
@@ -281,6 +325,35 @@ app.put('/api/updateAccountStatus/:userId', (req, res) => {
         .catch((msg) => {
             res.status(422).json({"message": msg});
         });
+});
+
+//UPDATING USER affiliation STATUS  
+app.put('/api/updateAffiliationStatus/:userId', (req, res) => {
+   // console.log(req.body);
+    userService.updUserAffStatus(req.body.affiliationApproved, req.body)
+    .then((msg) => {
+        console.log(msg);
+        res.json( msg);
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+
+//UPDATING EVENT STATUS
+app.put('/api/updateEventStatus/:eventId',  (req,res) => 
+{ 
+    console.log("Eventid: "+req.params.eventId);
+   // console.log("Event body : "+ JSON.stringify(req.body));
+    eventService.approveEvent(req.params.eventId, req.body)
+   
+    .then((successMessage) => {
+        res.json({ "message": successMessage });
+    })
+    .catch((errMessage) => {
+        res.status(422).json({ "message": errMessage })
+    });
 });
 
 
@@ -325,6 +398,17 @@ app.get('/api/events', (req, res) => {
             res.status(422).json({ "message": err });
         });
 });
+
+app.get('/api/eventsUser', (req, res) => {
+    eventService.getAllEventsWithUser()
+        .then((events) => {
+            res.json(events);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 app.post('/api/event/:event_id', passport.authenticate('general', {session: false}), [ check('userId')
 .equals('27').withMessage('You are not authorized to approve this')
 ], (req, res)=>{
@@ -361,8 +445,8 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         .isAfter().withMessage('You entered a start date that has already passed'),
     check('date_to')
         .custom((value, { req }) => {
-            let start = new Date(req.body.date_from);
-            let end = new Date(value);
+            let start = new Date(req.body.date_from + ' ' + req.body.time_from);
+            let end = new Date(value + ' ' + req.body.time_to);
             if (start >= end) {
                 throw new Error('Invalid end date entered');
             }
@@ -383,11 +467,13 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             }
         })
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventUpdateEmails(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventUpdateEmails(req.params.eventId);
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(500).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -430,11 +516,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
             }
         })
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventUpdateEmails(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventUpdateEmails(req.params.eventId);
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(500).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -486,11 +574,13 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
 app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.registerUserForEvent(req.params.eventId, req.params.userId)
         .then((msg) => {
-            res.json({ "message": msg });
-            eventService.sendEventRegistrationNoticeToOwner(req.params.eventId);
+            res.json({ "message": msg }).end();
+            return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'registered');
         })
+        .then((msg) => console.log(msg))
         .catch((err) => {
-            res.status(422).json({ "message": err });
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 
@@ -509,6 +599,21 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
         })
         .catch((err) => {
             res.status(500).json({ "message": err });
+        });
+});
+
+app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authenticate('general', {session: false}), (req, res) => {
+    if (req.user.userId != req.params.userId)
+        return res.json({"message": 'You are not authorized to do this'});
+    eventService.cancelRegistration(req.params.eventId, req.params.userId)
+        .then((msg) => {
+            res.json({ "message": msg }).end();
+            return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'cancelled');
+        })
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({ "message": err });
         });
 });
 

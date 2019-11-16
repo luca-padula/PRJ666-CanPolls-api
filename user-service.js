@@ -99,25 +99,80 @@ module.exports.registerUser = function(userData) {
             .then((hash) => {
                 userData.password = hash;
                 let randomString = crypto.randomBytes(32).toString('hex');
-                let randomHash = bcrypt.hashSync(randomString, 10).replace(/\//g, '');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace(/[^a-zA-Z\d]/g, '');
                 userData.verificationHash = randomHash;
                 return User.create(userData);
             })
-            .then((createdUser) => {
-                let mailLink = mailService.appUrl + '\/verifyEmail\/' + createdUser.userId +
-                    '\/' + createdUser.verificationHash;
-                let mailText = 'Hello ' + createdUser.firstName + ',\nthank you for registering with Canpolls. ' +
-                    'Please click the link below to verify your account.\n' + mailLink;
-                let mailData = {
-                    from: mailService.appFromEmailAddress,
-                    to: createdUser.email,
-                    subject: 'PRJ666 Canpolls Account Verification',
-                    text: mailText
-                };
-                return mailService.sendEmail(mailData);
+            .then((createdUser) => resolve({
+                msg: 'User ' + createdUser.userName + ' successfully registered',
+                user: createdUser
+            }))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.sendAccountVerificationEmail = function(user) {
+    return new Promise((resolve, reject) => {
+        let mailLink = mailService.appUrl + '\/verifyEmail\/' + user.userId +
+            '\/' + user.verificationHash;
+        let mailText = 'Hello ' + user.firstName + ',\nthank you for registering with CanPolls. ' +
+            'Please click the link below to verify your account.\n' + mailLink;
+        let mailData = {
+            from: mailService.appFromEmailAddress,
+            to: user.email,
+            subject: 'PRJ666 CanPolls Account Verification',
+            text: mailText
+        };
+        mailService.sendEmail(mailData)
+            .then(() => resolve('Successfully sent verification email to ' + user.email))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function accepts a user's userName or email and gives them a new verification hash
+// to be sent to the user to verify their account
+module.exports.resetVerificationHash = function(userNameOrEmail) {
+    return new Promise((resolve, reject) => {
+        let foundUser;
+        this.findUserByUsername(userNameOrEmail)
+            .then((result) => {
+                if (result) {
+                    foundUser = result;
+                    return true;
+                }
+                else {
+                    return this.findUserByEmail(userNameOrEmail);
+                }
             })
-            .then(() => resolve('User ' + userData.userName + ' successfully registered'))
-            .catch((msg) => reject(msg));
+            .then((foundByEmail) => {
+                if (!foundUser) {
+                    if (foundByEmail) {
+                        foundUser = foundByEmail;
+                    }
+                    else {
+                        return reject('User does not exist');
+                    }
+                }
+                let randomString = crypto.randomBytes(32).toString('hex');
+                let randomHash = bcrypt.hashSync(randomString, 10).replace(/[^a-zA-Z\d]/g, '');
+                foundUser.verificationHash = randomHash;
+                return User.update({
+                    verificationHash: randomHash
+                }, {
+                    where: { userId: foundUser.userId }
+                });
+            })
+            .then(() => resolve({ msg: 'Successfully updated verificationHash', user: foundUser }))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
     });
 }
 
@@ -210,13 +265,16 @@ module.exports.checkUser = function (userData) {
                         return reject('Incorrect email, username, or password entered');
                     }
                 }
-                if (!foundUser.isVerified) {
-                    return reject('You need to verify your account before you can log in. Check your email for the link.')
-                }
                 return bcrypt.compare(userData.password, foundUser.password);
             })
             .then((passwordsMatch) => {
                 if (passwordsMatch) {
+                    if (!foundUser.isVerified) {
+                        return reject('You need to verify your account before you can log in. Check your email for the link.')
+                    }
+                    if (foundUser.accountStatus == 'B') {
+                        return Promise.reject('Your account has been banned');
+                    }
                     resolve(foundUser);
                 }
                 else {
@@ -368,6 +426,74 @@ module.exports.checkUser2 = function (userData, oldPassword, newPassword) {
 }
 
 
+module.exports.deleteUser = function (userID)
+{
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: userID
+            }
+        })
+        .then((user) => {
+            var foundUserEmail = user.email;
+            var foundUserFname = user.firstName;
+            User.update({
+                userName : "deletedUser"+user.userId,
+                email: "deletedUser"+user.userId+"@senecacollege.ca",
+                firstName: "Deleted",
+                lastName: "User"+user.userId,
+                isVerified: 0,
+                accountStatus : 'B',
+                partyAffiliation : 'unaffiliated',
+                affiliationApproved : 0,
+                rejectionCount : 0
+            }, {
+                where: { userId: user.userId }
+            })
+            let mailText = 'Hello ' + foundUserFname + ',\nAs per your request, ' +
+            'your account has been deleted. Thanks for being a part of CanPolls. You can SignUp again anytime.\n\n' +
+            'We hope to see you soon\n\n'+
+            'Best.\nCanPolls Team';
+            let mailData = {
+            from: mailService.appFromEmailAddress,
+            to: foundUserEmail,
+            subject: 'PRJ666 CanPolls - We are sad to See You Go',
+            text: mailText
+            };
+
+            mailService.sendEmail(mailData)
+            .then(() => {
+                resolve();
+            })
+            .catch((msg) => {
+                console.log(msg);
+                reject('Error sending email');
+            });
+        })
+        .catch((err) => {
+            reject('An error occured');
+        })
+    });
+}
+
+
+module.exports.getAllUsersByParty = function(partyName) {
+    return new Promise((resolve, reject) => {
+        User.findAll({
+            where: {
+            partyAffiliation: partyName
+                }
+        })
+            .then((users) => {
+                resolve(users);
+            })
+            .catch((err) => {
+                console.log(err);
+                reject('An error occured');
+            });
+    });
+}
+
 //ADMIN ROUTES
 
 module.exports.updUserAccStatus = function(status, foundUserId)
@@ -380,7 +506,82 @@ module.exports.updUserAccStatus = function(status, foundUserId)
                     where: { userId: foundUserId }
                 })
                 .then(() => {
+                        if(status == "A")
+                        {
+                            User.update({
+                                rejectionCount : 0
+                            }, {
+                                where: { userId: foundUserId }
+                            }).then( console.log('Rejection Count set to 0'))
+                            .catch((err) => {
+                                console.log(err);
+                                reject('Error changing rejection count user');
+                            });
+
+                        }
                         resolve('Status successfully changed');
+                })
+                .catch((err) => {
+                        console.log(err);
+                        reject('Error updating user');
+                 });
+            })
+}
+
+module.exports.updUserAffStatus = function(status, foundUser)
+{
+    return new Promise((resolve, reject) => {
+                User.update({
+                    affiliationApproved : status
+                }, {
+                    where: { userId: foundUser.userId }
+                })
+                .then(() => {
+                    let mailText = '';
+                    let subjectLine = ''
+                    let partyName = foundUser.partyAffiliation[0].toUpperCase()+foundUser.partyAffiliation.substring(1);
+                    if(status == "true")
+                    {
+                        subjectLine = 'PRJ66 CanPolls - Welcome to The '+partyName;
+                        mailText = 'Hello '+foundUser.firstName+',\n\n' +
+                        'This is the administrator of the CanPolls\'s ' +partyName+'. I am delighted to have you as a part of our team.'+
+                        ' You are now eligle to create Events but they will have to be "Approved" by the team.' +
+                        '\n\n'+
+                        'All Events are monitored by the Administrators. ' +
+                        'Remember, submitting an offensive event can cause a permanent BAN from the website.'+
+                        '\n\nBest.\nCanPolls Team';
+                        console.log("affiliation approved")
+                    }
+                    else
+                    {
+                        console.log("affiliation rejected")
+                        subjectLine = 'PRJ66 CanPolls - You Recent Request to Join '+partyName;
+                        mailText = 'Hello '+foundUser.firstName+',\n\n' +
+                        'I am sorry to let you know that your recent request '+
+                        'to be a part of '+partyName+' has been declined by our Administrator.' +
+                        '\n\n'+
+                        'Please send an email at prj666_193a03@myseneca.ca to know further details.' +
+                        ' I wish you all the very best for your future endeavors. Thanks for using CanPolls.'+
+                        '\n\nBest.\nCanPolls Team';
+                    }
+
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: foundUser.email,
+                        subject: subjectLine,
+                        text: mailText
+                        };
+            
+                       mailService.sendEmail(mailData)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch((msg) => {
+                            console.log(msg);
+                            reject('Error sending email');
+                        });
+                    
+                    resolve('Affiliation successfully changed');
                 })
                 .catch((err) => {
                         console.log(err);
