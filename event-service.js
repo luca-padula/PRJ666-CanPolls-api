@@ -70,19 +70,21 @@ module.exports.createEvent = function(eventData){
             attendee_limit: eventData.attendee_limit,
             isApproved: false,
             UserUserId: eventData.userId
-        }),
-        Location.create({
-            venue_name: eventData.venue_name,
-            street_name: eventData.street_name,
-            city: eventData.city,
-            province: eventData.province,
-            postal_code: eventData.postal_code,
-            EventEventId: events[events.length - 1].event_id
         })
         .then(()=>{
                  Event.findAll({})
                  .then((events)=>{
-                     console.log("location entered: "+JSON.stringify(eventData));
+                    // console.log("location entered: "+JSON.stringify(eventData));
+
+                     Location.create({
+                        venue_name: eventData.venue_name,
+                        street_name: eventData.street_name,
+                        city: eventData.city,
+                        province: eventData.province,
+                        postal_code: eventData.postal_code,
+                        EventEventId: events[events.length - 1].event_id
+                    })
+
                     resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
                  })
                  .catch((err)=>{
@@ -456,10 +458,11 @@ module.exports.getAllEventsByUser = function(userId){
 module.exports.getEventsAttendedByUser = function(userId){
     return new Promise((resolve, reject)=>{
         EventRegistration.findAll({
+            include: [Event],
             where:{UserUserId: userId}
         })
         .then((event) => {
-            console.log(event);
+           // console.log("Event Attended: "+JSON.stringify(event));
             resolve(event);
         })
         .catch((err) => {
