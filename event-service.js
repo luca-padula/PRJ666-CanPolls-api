@@ -58,8 +58,8 @@ module.exports.getAllEvents = function() {
 }
 
 module.exports.createEvent = function(eventData){
+    
     return new Promise((resolve, reject)=>{
-        console.log(eventData.event_title);
         Event.create({
             event_title: eventData.event_title,
             event_description: eventData.event_description,
@@ -71,40 +71,51 @@ module.exports.createEvent = function(eventData){
             attendee_limit: eventData.attendee_limit,
             isApproved: false,
             UserUserId: eventData.userId
-        }).then((createdEvent)=>{
-        Location.create({
-            venue_name: eventData.venue_name,
-            street_name: eventData.street_name,
-            city: eventData.city,
-            province: eventData.province,
-            postal_code: eventData.postal_code,
-            EventEventId: createdEvent.event_id
-        })})
-            .then(()=>{
+        })
+        .then(()=>{
+                 Event.findAll({})
+                 .then((events)=>{
+                    // console.log("location entered: "+JSON.stringify(eventData));
+
+                     Location.create({
+                        venue_name: eventData.venue_name,
+                        street_name: eventData.street_name,
+                        city: eventData.city,
+                        province: eventData.province,
+                        postal_code: eventData.postal_code,
+                        EventEventId: events[events.length - 1].event_id
+                    })
+
+                    resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
+                 })
+                 .catch((err)=>{
+                    reject('Counldn\'t find the event');
+                })
+            
+        })
+        .catch((err) =>{
+            reject('Couldn\'t submit event');
+        })
+    });
+                /*
+                
                 Event.findAll({}).then((events)=>{
 
                     let mailLink = mailService.appUrl + '\/event\/' + events[events.length - 1].event_id;
+                    console.log(mailLink);
                 let mailText = 'Hello Admin,\nThere is new event just created.' +
-                    '\n Click here to check ot the event. \n' + mailLink;
+                    '\n Click here to check out the event. \n' + mailLink;
                 let mailData = {
                     from: mailService.appFromEmailAddress,
                     to: 'amhnguyen@myseneca.ca',
                     subject: 'PRJ666 CanPolls Event Verification',
                     text: mailText
                 };
-                mailService.sendEmail(mailData)
-                        .then(()=>resolve('Event ' + eventData.event_id + ' successfully submitted'))
-                        .catch((msg) => reject('Error sending verification email'));
-                })
-            .catch((err)=>{
-                reject('Counldnt fine the event');
-            })
-                
-            })
-            .catch((err) =>{
-                reject('Couldnt submit event');
-            })
-        });
+                 mailService.sendEmail(mailData)
+                         .then(()=>resolve('Event ' + eventData.event_id + ' successfully submitted'))
+                        .catch((msg) => reject('Error sending verification email'));*/
+                        
+
 }
 
 module.exports.updateEventById = function(eId, uId, eventData) {
@@ -436,6 +447,23 @@ module.exports.getAllEventsByUser = function(userId){
             where:{UserUserId: userId}
         })
         .then((event) => {
+            resolve(event);
+        })
+        .catch((err) => {
+            console.log(err.message);
+            reject('An error occured');
+        })
+    });
+}
+
+module.exports.getEventsAttendedByUser = function(userId){
+    return new Promise((resolve, reject)=>{
+        EventRegistration.findAll({
+            include: [Event],
+            where:{UserUserId: userId}
+        })
+        .then((event) => {
+           // console.log("Event Attended: "+JSON.stringify(event));
             resolve(event);
         })
         .catch((err) => {

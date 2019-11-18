@@ -361,22 +361,51 @@ app.put('/api/updateEventStatus/:eventId',  (req,res) =>
 // Event routes
 
 app.post('/api/createEvent',[
+    check('userId')
+    .custom((value) => {
+        return userService.getUserById(value).then((userObj) => {
+
+            if(userObj.affiliationApproved == false) {
+
+              return Promise.reject('You have not been approved to create Events. Please wait for an administrator to verify you or email us at prj666_193a03@myseneca.ca to know further details');
+            }
+        })
+        .catch((msg) => {
+            console.log("catch msg");
+            return Promise.reject(msg);
+        });
+    }),
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
-        .isLength({max: 50}).withMessage('Event title is too long')
+        .isLength({max: 50}).withMessage('Event title is too long'),
+    check('event_description')
+        .trim()
+        .not().isEmpty().withMessage('Event Description cannot be empty')
+        .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
+    check('date_from')
+        .isAfter().withMessage('You entered a start date that has already passed'),
+    check('date_to')
+        .custom((value, { req }) => {
+            let start = new Date(req.body.date_from + ' ' + req.body.time_from);
+            let end = new Date(value + ' ' + req.body.time_to);
+            if (start >= end) {
+                throw new Error('Invalid end date or time! Note: Start Date and Start Time should be greater than End Date and End Time.');
+            }
+            return true;
+        })
 ], (req, res) =>{
     const errors = validationResult(req);
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }
-    eventService.createEvent(req.body)
+     eventService.createEvent(req.body)
         .then((msg)=>{
             res.json({"message":msg});
         })
         .catch((msg)=>{
             res.status(422).json({"message": msg});
-        });
+        }); 
 });
 
 app.get('/api/event/:event_id', (req, res) => {
@@ -561,6 +590,17 @@ app.get('/api/events/createdEvents/:userId', (req, res) => {
             res.status(422).json({ "message": err });
         });
 });
+
+app.get('/api/events/attendedByUser/:userId', (req, res) => {
+    eventService.getEventsAttendedByUser(req.params.userId)
+        .then((event) => {
+            res.json(event);
+        })
+        .catch((err) => {
+            res.status(422).json({ "message": err });
+        });
+});
+
 
 // This route returns a count of all the registrations (registration status is not 'removed') for a given event id
 app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {

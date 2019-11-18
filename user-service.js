@@ -40,13 +40,14 @@ module.exports.getUserById = function(uId) {
 module.exports.updateUserInfo = function(userId, userData) {
     return new Promise((resolve, reject) => {
         var emailChanged = 0;
+        var partyChanged =0;
         User.findOne({
             where: {
                 userId: userId
             }
         })
             .then((foundUser) => {
-                console.log(foundUser);
+                //console.log(foundUser);
                 if ( !foundUser || !foundUser.isVerified) {
                     return reject('User not found or Email not verified!');
                 }
@@ -64,11 +65,14 @@ module.exports.updateUserInfo = function(userId, userData) {
                                 text: mailText
                             };
                             mailService.sendEmail(mailData);
-                            User.update({
-                                isVerified: false
-                            }, {
-                                where: { userId: foundUser.userId }
-                            }) 
+                            
+                            userData.isVerified=false;
+                }
+                //USER REQUESTED PARTY CHANGE
+                if(userData.partyAffiliation!= foundUser.partyAffiliation)
+                {
+                    partyChanged = 1;
+                    userData.affiliationApproved = false;
                 }
                 User.update(userData, {
                     where: { userId: foundUser.userId }
@@ -78,6 +82,11 @@ module.exports.updateUserInfo = function(userId, userData) {
                             if(emailChanged == 1)
                             {
                                 finalMessage+= ' You have changed your email address. Please verify the new address.';
+                            }
+                            if(partyChanged == 1)
+                            {
+                                finalMessage+= ' You have changed your party. A representative from the new party will shortly approve you.'+
+                                ' Unfortunately, until then you cannot create Events.';
                             }
                         resolve(finalMessage);
                     })
@@ -588,4 +597,71 @@ module.exports.updUserAffStatus = function(status, foundUser)
                         reject('Error updating user');
                  });
             })
+}
+
+module.exports.sendAdminEventDetails = function(requestingUserId, eventId) {
+    let foundUser = new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: requestingUserId
+            }
+        })
+        .then((user) => {
+            foundUser  = user;
+            resolve (user);
+        })
+        .catch((err) => {
+            reject(err+ ' Error getting user');
+        })
+    });
+
+            foundUser.then(values => {
+                console.log("Found User inside then: "+JSON.stringify(values));
+                console.log("value User id: "+values.userId);
+
+                    let foundAdmin =  new Promise((res, rej) => {
+                        User.findOne({
+                            where: {
+                                partyAffiliation: foundUser.partyAffiliation,
+                                isAdmin: true
+                            }
+                        })
+                        .then((admin) => {
+                            foundAdmin = admin;
+                            res(admin);
+                        })
+                        .catch((err) => {
+                            rej('Error getting admin');
+                        })
+                    });
+
+              foundAdmin.then(values => {
+                    
+                    console.log("admin un: "+values.userName);   
+    
+                    let mailLink = mailService.appUrl + '\/event\/' + eventId;
+                    console.log(mailLink);
+                    let mailText = 'Hello '+values.firstName+',\n\nThere is new event request created by one of your members.' +
+                    '\nClick here to check out the event. \n' + mailLink +'\n\nOr got to your profile and Approve/Decline the event.\n\n' +
+                    'Best.\nCanPolls Team.';
+                    let mailData = {
+                    from: mailService.appFromEmailAddress,
+                    to: values.email,
+                    subject: 'PRJ666 CanPolls '+foundUser.partyAffiliation+' Event Verification',
+                    text: mailText
+                    };
+
+                        return new Promise((res2, rej2) =>{ 
+                            mailService.sendEmail(mailData)
+                            .then(() => {
+                                res2('Event successfull submitted!');
+                            })
+                            .catch((msg) => {
+                                console.log(msg);
+                                rej2('Error sending email');
+                            });
+                        
+                        });
+                });
+        });
 }
