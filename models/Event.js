@@ -2,10 +2,10 @@ const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
 const LocationModel = require('./Location.js');
 const EventRegistrationModel = require('./EventRegistration.js');
-
+const FeedbackModel = require('./Feedback.js');
 let Location = LocationModel.Location;
 let EventRegistration = EventRegistrationModel.EventRegistration;
-
+let Feedback = FeedbackModel.Feedback;
 let database = databaseWrapper.getDatabase();
 
 var Event = database.define('Event', {
@@ -56,5 +56,6 @@ Event.hasOne(Location);
 Location.belongsTo(Event);
 Event.hasMany(EventRegistration);
 EventRegistration.belongsTo(Event);
+Event.hasMany(Feedback);
 
 module.exports = {Event};
