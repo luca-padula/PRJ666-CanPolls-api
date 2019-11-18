@@ -718,35 +718,3 @@ database.initializeDatabase().then(() => {
 .catch((err) => {
     console.log('Unable to start the server: ', err);
 });
-
-
-
-/*
-
-app.post("/api/upload/sshot", upload.single("file" ),
-    (req, res) => {
-      const tempPath = req.file.path;
-      console.log("temp path: "+tempPath);
-      const targetPath = path.join(__dirname, "./uploads/image.png");
-      console.log("target path: "+targetPath);
-      if (path.extname(req.file.originalname).toLowerCase() === ".png") {
-        fs.rename(tempPath, targetPath, err => {
-          if (err) return handleError(err, res);
-  
-          res
-            .status(200)
-            .contentType("text/plain")
-            .end("File uploaded!");
-        });
-      } else {
-        fs.unlink(tempPath, err => {
-          if (err) return handleError(err, res);
-  
-          res
-            .status(403)
-            .contentType("text/plain")
-            .end("Only .png files are allowed!");
-        });
-      }
-    }
-  );*/
