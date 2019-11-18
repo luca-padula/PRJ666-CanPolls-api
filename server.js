@@ -18,6 +18,23 @@ app.use(cors());
 app.use(bodyParser.json());
 
 
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './images')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+const upload = multer({
+    storage: storage
+})
+
+
 // User routes
 
 app.get('/api/users', (req, res) => {
@@ -658,6 +675,21 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
 });
 
 
+app.post('/api/upload',  upload.single('file'), (req, res) => {
+    console.log(JSON.stringify(req.file));
+    // the file is uploaded when this route is called with formdata.
+    // now you can store the file name in the db if you want for further reference.
+    const filename = req.file.filename;
+    const path = req.file. path;
+    // Call your database method here with filename and path
+    res.json({'message': 'File uploaded'});
+  });
+  
+app.get('/api/getimage', function (req, res) {
+    console.log("sending image");
+    console.log(__dirname);
+      res.sendFile(__dirname +'/images/EventPicture.png');
+});
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');
@@ -670,3 +702,35 @@ database.initializeDatabase().then(() => {
 .catch((err) => {
     console.log('Unable to start the server: ', err);
 });
+
+
+
+/*
+
+app.post("/api/upload/sshot", upload.single("file" ),
+    (req, res) => {
+      const tempPath = req.file.path;
+      console.log("temp path: "+tempPath);
+      const targetPath = path.join(__dirname, "./uploads/image.png");
+      console.log("target path: "+targetPath);
+      if (path.extname(req.file.originalname).toLowerCase() === ".png") {
+        fs.rename(tempPath, targetPath, err => {
+          if (err) return handleError(err, res);
+  
+          res
+            .status(200)
+            .contentType("text/plain")
+            .end("File uploaded!");
+        });
+      } else {
+        fs.unlink(tempPath, err => {
+          if (err) return handleError(err, res);
+  
+          res
+            .status(403)
+            .contentType("text/plain")
+            .end("Only .png files are allowed!");
+        });
+      }
+    }
+  );*/

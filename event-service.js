@@ -75,7 +75,7 @@ module.exports.createEvent = function(eventData){
         .then(()=>{
                  Event.findAll({})
                  .then((events)=>{
-                    // console.log("location entered: "+JSON.stringify(eventData));
+                    console.log("location entered: "+JSON.stringify(eventData));
 
                      Location.create({
                         venue_name: eventData.venue_name,
@@ -86,7 +86,7 @@ module.exports.createEvent = function(eventData){
                         EventEventId: events[events.length - 1].event_id
                     })
 
-                    resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
+                    //resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
                  })
                  .catch((err)=>{
                     reject('Counldn\'t find the event');
