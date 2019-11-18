@@ -657,6 +657,22 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
         });
 });
 
+app.post('/api/createFeedback',[
+
+],(req,res) =>{
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
+    eventService.createFeedback(req.body)
+    .then((msg)=>{
+        res.json({"message": msg});
+    })
+    .catch((msg)=>{
+        res.status(422).json({"message": msg});
+    });
+})
+
 
 // catch-all 404 route
 app.use((req, res) => {
