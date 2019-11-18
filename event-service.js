@@ -7,6 +7,8 @@ const Op = Sequelize.Op;
 
 const EventModel = require('./models/Event.js');
 let Event = EventModel.Event;
+const FeedbackModel = require('./models/Feedback.js');
+let Feedback = FeedbackModel.Feedback;
 const LocationModel = require('./models/Location.js');
 let Location = LocationModel.Location;
 const EventRegistrationModel = require('./models/EventRegistration.js');
@@ -501,4 +503,18 @@ module.exports.updateEventStatus = function(eventId, statusVal)
             reject('An error occured');
         });
 });
+}
+
+module.exports.createFeedback = function(feedback){
+    return new Promise((resolve, reject)=>{
+        Feedback.create(feedback);
+    })
+    .then((createdFeedback) => resolve({
+        msg: 'Feedbace ' + createdFeedback.feedback_id + ' successfully created',
+        feedback: createdFeedback
+    }))
+    .catch((err) => {
+        console.log(err);
+        reject(err);
+    });
 }

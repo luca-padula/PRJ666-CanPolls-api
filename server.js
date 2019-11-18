@@ -674,6 +674,22 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
         });
 });
 
+app.post('/api/createFeedback',[
+
+],(req,res) =>{
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({"validationErrors": errors.array()});
+    }
+    eventService.createFeedback(req.body)
+    .then((msg)=>{
+        res.json({"message": msg});
+    })
+    .catch((msg)=>{
+        res.status(422).json({"message": msg});
+    });
+})
+
 
 app.post('/api/upload',  upload.single('file'), (req, res) => {
     console.log(JSON.stringify(req.file));
