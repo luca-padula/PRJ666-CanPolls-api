@@ -25,14 +25,10 @@ var Feedback = database.define('Feedback', {
         type: Sequelize.STRING,
         allowNull: false
     },
-    eventEventId:{
-        type:Sequelize.INTEGER,
-        allowNull: false
-    },
     userUserId:{
         type:Sequelize.INTEGER,
         allowNull:false
     }
 });
-Feedback.belongsTo(Event);
+
 module.exports = {Feedback};
