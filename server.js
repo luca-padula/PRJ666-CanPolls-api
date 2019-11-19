@@ -10,12 +10,29 @@ const eventService = require('./event-service.js');
 const passportConfig = require('./config/passportConfig.js');
 const jwtConfig = require('./config/jwtConfig.js');
 
+const fs =require('fs');
 const HTTP_PORT = process.env.PORT || 8080;
 var app = express();
 
 app.use(passport.initialize());
 app.use(cors());
 app.use(bodyParser.json());
+
+
+const path = require("path");
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './images')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+const upload = multer({
+    storage: storage
+})
 
 
 // User routes
@@ -675,6 +692,19 @@ app.post('/api/createFeedback',[
 })
 
 
+app.post('/api/upload',  upload.single('file'), (req, res) => {
+    console.log(JSON.stringify(req.file));
+    // the file is uploaded when this route is called with formdata.
+    // now you can store the file name in the db if you want for further reference.
+    const filename = req.file.filename;
+    const path = req.file. path;
+    // Call your database method here with filename and path
+    res.json({'message': 'File uploaded'});
+  });
+  
+app.get('/api/getimage/:imageName', function (req, res) {
+      res.sendFile(__dirname +'/images/'+req.params.imageName);
+});
 // catch-all 404 route
 app.use((req, res) => {
     res.status(404).send('404 code');
