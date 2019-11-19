@@ -661,6 +661,7 @@ app.post('/api/createFeedback',[
 
 ],(req,res) =>{
     const errors = validationResult(req);
+    console.log("here!!");
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }

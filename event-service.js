@@ -507,12 +507,18 @@ module.exports.updateEventStatus = function(eventId, statusVal)
 
 module.exports.createFeedback = function(feedback){
     return new Promise((resolve, reject)=>{
-        Feedback.create(feedback);
+        console.log(feedback);
+        Feedback.create({
+            feedback_desc: feedback.feedback_desc,
+            feedback_date: feedback.feedback_date,
+            feedback_rating: feedback.feedback_rating,
+            userUserId: feedback.userUserId,
+            EventEventId: feedback.eventEventId
+        });
     })
-    .then((createdFeedback) => resolve({
-        msg: 'Feedbace ' + createdFeedback.feedback_id + ' successfully created',
-        feedback: createdFeedback
-    }))
+    .then((createdFeedback) => {
+        resolve(createdFeedback);
+    })
     .catch((err) => {
         console.log(err);
         reject(err);
