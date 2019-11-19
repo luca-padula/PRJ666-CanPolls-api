@@ -87,8 +87,30 @@ module.exports.createEvent = function(eventData){
                         postal_code: eventData.postal_code,
                         EventEventId: events[events.length - 1].event_id
                     })
-
-                    //resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
+                    console.log("prev name"+ eventData.photo);
+                    var renameImageTo = events[events.length - 1].event_id + ""+eventData.photo;
+                    Event.findOne({
+                        where:{event_id: events[events.length - 1].event_id}
+                    })
+                    .then((foundEvent) => {
+                        
+                        Event.update(
+                            {
+                                photo : renameImageTo
+                            },
+                             {
+                                where: { event_id: foundEvent.event_id}
+                             })
+                    })
+                    .catch((err) => {
+                        reject('An error occured');
+                    });
+                    
+                    console.log("Reanme: "+renameImageTo);
+                    fs.rename('images/'+eventData.photo, 'images/'+renameImageTo, function(err) {
+                        if ( err ) console.log('ERROR: ' + err);
+                    });
+                   // resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
                  })
                  .catch((err)=>{
                     reject('Counldn\'t find the event');
@@ -123,6 +145,14 @@ module.exports.createEvent = function(eventData){
 module.exports.updateEventById = function(eId, uId, eventData) {
     // TO-DO: Send email to admin of corresponding party requesting approval after updating
     return new Promise((resolve, reject) => {
+        console.log("1stevdata.photo: "+eventData.photo);
+        var renameImageTo = eId + ""+eventData.photo;
+        console.log("Reanme: "+renameImageTo);
+        fs.rename('images/'+eventData.photo, 'images/'+renameImageTo, function(err) {
+            if ( err ) console.log('ERROR: ' + err);
+        });
+        eventData.photo = renameImageTo;
+        console.log("evdata.photo: "+eventData.photo);
         Event.update(eventData, {
             where: {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
@@ -131,6 +161,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
             .then(() => resolve('Event successfully updated'))
             .catch((err) => {
                 console.log(err);
+                fs.unlinkSync(eventData.photo);
                 reject('Error updating event');
             });
     });

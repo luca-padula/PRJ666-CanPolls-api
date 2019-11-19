@@ -10,6 +10,7 @@ const eventService = require('./event-service.js');
 const passportConfig = require('./config/passportConfig.js');
 const jwtConfig = require('./config/jwtConfig.js');
 
+const fs =require('fs');
 const HTTP_PORT = process.env.PORT || 8080;
 var app = express();
 
@@ -19,7 +20,6 @@ app.use(bodyParser.json());
 
 
 const path = require("path");
-const fs = require("fs");
 const multer = require("multer");
 
 const storage = multer.diskStorage({
@@ -701,10 +701,8 @@ app.post('/api/upload',  upload.single('file'), (req, res) => {
     res.json({'message': 'File uploaded'});
   });
   
-app.get('/api/getimage', function (req, res) {
-    console.log("sending image");
-    console.log(__dirname);
-      res.sendFile(__dirname +'/images/EventPicture.png');
+app.get('/api/getimage/:imageName', function (req, res) {
+      res.sendFile(__dirname +'/images/'+req.params.imageName);
 });
 // catch-all 404 route
 app.use((req, res) => {
