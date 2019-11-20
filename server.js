@@ -435,8 +435,10 @@ app.get('/api/event/:event_id', (req, res) => {
         });
 });
 
-app.get('/api/events', (req, res) => {
-    eventService.getAllEvents()
+app.get('/api/events/:getAll', (req, res) => {
+    var getALL= req.params.getAll;
+    console.log("getAll: "+getALL);
+    eventService.getAllEvents(getALL)
         .then((events) => {
             res.json(events);
         })

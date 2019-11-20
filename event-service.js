@@ -45,10 +45,32 @@ module.exports.getEventById = function(eId){
     });
 }
 
-module.exports.getAllEvents = function() {
+module.exports.getAllEvents = function(getAll) {
+
+    if(getAll == "false")
+    {
+        return new Promise((resolve, reject) => {
+            Event.findAll({
+                where:{
+                    isApproved:true, 
+                    date_to: { [Op.gt]: new Date().toISOString().slice(0,10) }
+                }
+            })
+                .then((events) => {
+                    resolve(events);
+                })
+                .catch((err) => {
+                    reject('An error occured');
+                });
+        });
+    }
+    else
+    {
     return new Promise((resolve, reject) => {
         Event.findAll({
-            where:{isApproved:true}
+            where:{
+                isApproved:true
+            }
         })
             .then((events) => {
                 resolve(events);
@@ -57,6 +79,7 @@ module.exports.getAllEvents = function() {
                 reject('An error occured');
             });
     });
+    }
 }
 
 module.exports.createEvent = function(eventData){
