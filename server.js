@@ -401,13 +401,23 @@ app.post('/api/createEvent',[
         .not().isEmpty().withMessage('Event Description cannot be empty')
         .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
     check('date_from')
-        .isAfter().withMessage('You entered a start date that has already passed'),
-    check('date_to')
+       // .isAfter().withMessage('You entered a start date that has already passed')
+    //check('date_to')
         .custom((value, { req }) => {
+            console.log("inside date from");
+            var curDate = new Date().toISOString().slice(0,10);
+
+            if(value <=curDate)
+            {
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+            }
+
+            console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
             let start = new Date(req.body.date_from + ' ' + req.body.time_from);
-            let end = new Date(value + ' ' + req.body.time_to);
+            let end = new Date(req.body.date_from + ' ' + req.body.time_to);
             if (start >= end) {
-                throw new Error('Invalid end date or time! Note: Start Date and Start Time should be greater than End Date and End Time.');
+                console.log("throwing error");
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
             }
             return true;
         })
@@ -490,13 +500,24 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             return true;
         }),
     check('date_from')
-        .isAfter().withMessage('You entered a start date that has already passed'),
-    check('date_to')
+      //  .isAfter().withMessage('You entered a start date that has already passed')
+   // check('date_to')
         .custom((value, { req }) => {
+
+            console.log("inside date from");
+            var curDate = new Date().toISOString().slice(0,10);
+
+            if(value <=curDate)
+            {
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+            }
+
+            console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
             let start = new Date(req.body.date_from + ' ' + req.body.time_from);
-            let end = new Date(value + ' ' + req.body.time_to);
+            let end = new Date(req.body.date_from + ' ' + req.body.time_to);
             if (start >= end) {
-                throw new Error('Invalid end date entered');
+                console.log("throwing error");
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
             }
             return true;
         })

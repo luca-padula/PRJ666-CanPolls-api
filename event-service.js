@@ -53,7 +53,7 @@ module.exports.getAllEvents = function(getAll) {
             Event.findAll({
                 where:{
                     isApproved:true, 
-                    date_to: { [Op.gt]: new Date().toISOString().slice(0,10) }
+                    date_from: { [Op.gt]: new Date().toISOString().slice(0,10) }
                 }
             })
                 .then((events) => {
@@ -83,14 +83,14 @@ module.exports.getAllEvents = function(getAll) {
 }
 
 module.exports.createEvent = function(eventData){
-    
+    console.log(JSON.stringify(eventData));
     return new Promise((resolve, reject)=>{
         Event.create({
             event_title: eventData.event_title,
             event_description: eventData.event_description,
             photo: eventData.photo,
             date_from: eventData.date_from,
-            date_to: eventData.date_to,
+          //  date_to: eventData.date_to,
             time_from: eventData.time_from,
             time_to: eventData.time_to,
             attendee_limit: eventData.attendee_limit,
