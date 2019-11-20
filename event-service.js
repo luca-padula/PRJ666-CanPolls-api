@@ -520,7 +520,14 @@ module.exports.getAllEventsWithUser = function() {
     });
 }
 
-
+module.exports.getEventsByProvince = function(province){
+    return new Promise((resolve, reject)=>{
+        Location.findAll({
+            where:{province: province}
+        })
+        .then()
+    })
+}
 module.exports.updateEventStatus = function(eventId, statusVal)
 {
     return new Promise((resolve, reject) => {
@@ -553,5 +560,20 @@ module.exports.createFeedback = function(feedback){
     .catch((err) => {
         console.log(err);
         reject(err);
+    });
+}
+
+module.exports.getFeedbackByEventId = function(eventid){
+    return new Promise((resolve, reject)=>{
+        Feedback.findAll({
+            where:{EventEventId:eventid}
+        })
+        .then((event)=>{
+            resolve(event);
+        })
+        .catch((err)=>{
+            console.log(err.message);
+            reject('cannot get feedback');
+        })
     });
 }
