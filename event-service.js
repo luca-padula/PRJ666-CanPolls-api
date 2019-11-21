@@ -136,7 +136,7 @@ module.exports.createEvent = function(eventData){
                     fs.rename('images/'+eventData.photo, 'images/'+renameImageTo, function(err) {
                         if ( err ) console.log('ERROR: ' + err);
                     });
-                   // resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
+                    resolve(userService.sendAdminEventDetails(eventData.userId,events[events.length - 1].event_id))
                  })
                  .catch((err)=>{
                     reject('Counldn\'t find the event');
@@ -502,7 +502,7 @@ module.exports.approveEvent = function(event_id, data){
 
 module.exports.getAllEventsByUser = function(userId){
     return new Promise((resolve, reject)=>{
-        Event.findAll({
+        Event.findAll({include: [User],
             where:{UserUserId: userId}
         })
         .then((event) => {
@@ -546,7 +546,7 @@ module.exports.getAllEventsWithUser = function() {
     });
 }
 
-
+/*
 module.exports.updateEventStatus = function(eventId, statusVal)
 {
     return new Promise((resolve, reject) => {
@@ -561,7 +561,7 @@ module.exports.updateEventStatus = function(eventId, statusVal)
         });
 });
 }
-
+*/
 module.exports.createFeedback = function(feedback){
     return new Promise((resolve, reject)=>{
         console.log(feedback);

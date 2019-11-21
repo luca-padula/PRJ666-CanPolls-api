@@ -74,9 +74,6 @@ app.get('/api/userToken/:userId', (req, res) => {
     });
 });
 
-/* */
-
-
 app.get('/api/users/:userName', (req, res) => {
     userService.findUserByUsername(req.params.userName).then((msg) => {
         res.json(msg);

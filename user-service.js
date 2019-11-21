@@ -87,8 +87,11 @@ module.exports.updateUserInfo = function(userId, userData) {
                 //USER REQUESTED PARTY CHANGE
                 if(userData.partyAffiliation!= foundUser.partyAffiliation)
                 {
-                    partyChanged = 1;
-                    userData.affiliationApproved = false;
+                    if(userData.partyAffiliation!='Unaffiliated')
+                    {
+                        partyChanged = 1;
+                        userData.affiliationApproved = false;
+                    }
                 }
                 User.update(userData, {
                     where: { userId: foundUser.userId }
@@ -590,7 +593,7 @@ module.exports.updUserAffStatus = function(status, foundUser)
                         '\n\nBest.\nCanPolls Team';
                     }
 
-                    let mailData = {
+                        let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: foundUser.email,
                         subject: subjectLine,
