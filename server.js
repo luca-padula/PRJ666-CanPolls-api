@@ -56,6 +56,27 @@ app.get('/api/users/:userId', (req, res) => {
     });
 });
 
+app.get('/api/userToken/:userId', (req, res) => {
+    userService.getUserTokenById(req.params.userId)
+    .then((user) => {
+        var payload = {
+            userId: user.userId,
+            userName: user.userName,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            partyAffiliation: user.partyAffiliation
+        };
+        var token = jwt.sign(payload, jwtConfig.secret);
+        res.json({ "message": "user: " + user.userName, "token": token });
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
+/* */
+
+
 app.get('/api/users/:userName', (req, res) => {
     userService.findUserByUsername(req.params.userName).then((msg) => {
         res.json(msg);

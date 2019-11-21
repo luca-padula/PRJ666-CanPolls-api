@@ -51,16 +51,18 @@ module.exports.getAllEvents = function(getAll) {
     {
         return new Promise((resolve, reject) => {
             Event.findAll({
+                include: [{model: User, where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated'} } }],
                 where:{
                     isApproved:true, 
                     date_from: { [Op.gt]: new Date().toISOString().slice(0,10) }
                 }
             })
                 .then((events) => {
+                    //console.log(JSON.stringify(events));
                     resolve(events);
                 })
                 .catch((err) => {
-                    reject('An error occured');
+                    reject(err+ 'An error occured');
                 });
         });
     }
@@ -68,6 +70,7 @@ module.exports.getAllEvents = function(getAll) {
     {
     return new Promise((resolve, reject) => {
         Event.findAll({
+            include: [{model: User, where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated'} } }],
             where:{
                 isApproved:true
             }
