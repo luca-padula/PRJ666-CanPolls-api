@@ -37,6 +37,22 @@ module.exports.getUserById = function(uId) {
     });
 }
 
+module.exports.getUserTokenById = function(uId) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: uId
+            }
+        })
+        .then((user) => {
+            resolve(user);
+        })
+        .catch((err) => {
+            reject('Error getting user');
+        })
+    });
+}
+
 module.exports.updateUserInfo = function(userId, userData) {
     return new Promise((resolve, reject) => {
         var emailChanged = 0;
