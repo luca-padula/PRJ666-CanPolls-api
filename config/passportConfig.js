@@ -16,7 +16,8 @@ var strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
             userName: jwt_payload.userName,
             email: jwt_payload.email,
             isAdmin: jwt_payload.isAdmin,
-            partyAffiliation: jwt_payload.partyAffiliation
+            partyAffiliation: jwt_payload.partyAffiliation,
+            affiliationApproved: jwt_payload.affiliationApproved
         });
     }
     else {

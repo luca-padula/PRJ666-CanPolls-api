@@ -64,7 +64,8 @@ app.get('/api/userToken/:userId', (req, res) => {
             userName: user.userName,
             email: user.email,
             isAdmin: user.isAdmin,
-            partyAffiliation: user.partyAffiliation
+            partyAffiliation: user.partyAffiliation,
+            affiliationApproved: user.affiliationApproved
         };
         var token = jwt.sign(payload, jwtConfig.secret);
         res.json({ "message": "user: " + user.userName, "token": token });
@@ -309,8 +310,10 @@ app.put('/api/updatePassword/:userId' , [
             if (!errors.isEmpty()) {
                 return res.status(422).json({ "validationErrors": errors.array() });
             }
-            var newPass = JSON.stringify(req.body.password);
-            userService.checkUser2(req.body.currentUser, req.body.curPass, newPass)
+           // var newPass = JSON.stringify(req.body.password);
+            //console.log("Newoass: "+newPass);
+            //console.log("Newoass: "+req.body.password);
+            userService.checkUser2(req.body.currentUser, req.body.curPass, req.body.password)
             .then((user) => {
                 res.json({user});
             })
