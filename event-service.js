@@ -304,16 +304,24 @@ module.exports.registerUserForEvent = function(eventId, userId) {
                 let registrationDeadline = new Date(theEvent.date_from + ' ' + theEvent.time_from);
                 registrationDeadline.setHours(registrationDeadline.getHours() - 12);
                 if (now < registrationDeadline)
-                    return this.getRegistrationsWithCount(eventId);
+                    return this.getRegistrationsWithUsersByEventId(eventId);
                 else
                     return Promise.reject('It is too late to register for this event');
             })
             .then((registrations) => {
-                if (theEvent.attendee_limit != 0 && registrations.count >= theEvent.attendee_limit)
+                if (theEvent.attendee_limit != 0 && registrations.length >= theEvent.attendee_limit)
                     return Promise.reject('This event is already full');
-                let alreadyRegistered = registrations.rows.find((reg) => reg.UserUserId == userId);
-                if (alreadyRegistered)
-                    return Promise.reject('You have already registered for this event');
+                let regIdx = registrations.findIndex((reg) => reg.UserUserId == userId);
+                if (regIdx != -1) {
+                    let errorMsg;
+                    if (registrations[regIdx].status == 'registered')
+                        errorMsg = 'You are already registered for this event';
+                    else if (registrations[regIdx].status == 'cancelled')
+                        errorMsg = 'You cannot register for an event after cancelling';
+                    else
+                        errorMsg = 'You cannot register for an event after being removed';
+                    return Promise.reject(errorMsg);
+                }
                 return userService.getUserById(userId);
             })
             .then((user) => {

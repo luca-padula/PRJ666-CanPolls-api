@@ -642,7 +642,7 @@ app.get('/api/events/attendedByUser/:userId', (req, res) => {
 });
 
 
-// This route returns a count of all the registrations (registration status is not 'removed') for a given event id
+// This route returns a count of all the registrations (registration status is 'registered') for a given event id
 app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getRegistrationsWithCount(req.params.eventId)
         .then((result) => res.json(result.count))
