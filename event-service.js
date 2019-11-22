@@ -147,25 +147,6 @@ module.exports.createEvent = function(eventData){
             reject('Couldn\'t submit event');
         })
     });
-                /*
-                
-                Event.findAll({}).then((events)=>{
-
-                    let mailLink = mailService.appUrl + '\/event\/' + events[events.length - 1].event_id;
-                    console.log(mailLink);
-                let mailText = 'Hello Admin,\nThere is new event just created.' +
-                    '\n Click here to check out the event. \n' + mailLink;
-                let mailData = {
-                    from: mailService.appFromEmailAddress,
-                    to: 'amhnguyen@myseneca.ca',
-                    subject: 'PRJ666 CanPolls Event Verification',
-                    text: mailText
-                };
-                 mailService.sendEmail(mailData)
-                         .then(()=>resolve('Event ' + eventData.event_id + ' successfully submitted'))
-                        .catch((msg) => reject('Error sending verification email'));*/
-                        
-
 }
 
 module.exports.updateEventById = function(eId, uId, eventData) {
@@ -235,6 +216,8 @@ module.exports.sendEventUpdateEmails = function(eId) {
                             subject: 'PRJ666 CanPolls Event Update',
                             text: mailText
                         };
+                        console.log(registrations[i].User.notificationsOn);
+                        if(registrations[i].User.notificationsOn == true)
                         mailService.sendEmail(mailData)
                             .then(() => console.log('Successfully sent event update email to user ' + registrations[i].User.userName))
                             .catch((err) => console.log('Failed to send event update email to user ' + registrations[i].User.userName, err));
@@ -396,6 +379,8 @@ module.exports.sendEventRegistrationNoticeToOwner = function(eventId, updateType
                         subject: 'PRJ666 CanPolls Event Update',
                         text: mailText
                     };
+                    console.log(user.notificationsOn);
+                    if(user.notificationsOn == true)
                     return mailService.sendEmail(mailData);
                 }
                 else
@@ -440,7 +425,9 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
                     subject: 'PRJ666 CanPolls Event Notice',
                     text: mailText
                 };
-                return mailService.sendEmail(mailData);
+
+                if(foundUser.notificationsOn == true)
+                    return mailService.sendEmail(mailData);
             })
             .then(() => resolve('User successfully removed from event registration'))
             .catch((err) => {
@@ -461,8 +448,6 @@ module.exports.approveEvent = function(event_id, data){
             if(!event){
                 return reject('Link id is wrong');
             }
-            console.log(data.isApproved);
-            console.log(event.event_id);
             Event.update({
                 isApproved: data.isApproved
             }, {
@@ -473,11 +458,9 @@ module.exports.approveEvent = function(event_id, data){
                 where:{userId: event.UserUserId}
             })
             .then((foundUser)=>{
-                console.log(foundUser.userId);
                 let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
                 if(data.isApproved){
-                    console.log(event.isApproved);
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nCongratulation! Your event has been approved by our presentative.'+
                     '\nHere is a link to your event.\n' + mailLink;
@@ -492,9 +475,13 @@ module.exports.approveEvent = function(event_id, data){
                     subject: 'PRJ666 CanPolls Create Event',
                     text: mailText
                 };
-                mailService.sendEmail(mailData)
+                console.log("notification: "+foundUser.notificationsOn);
+                if(foundUser.notificationsOn == true)
+                {
+                    mailService.sendEmail(mailData)
                     .then(()=>resolve('Event ' + event.event_title +'successfully updated'))
                     .catch((msg)=> reject('Error sending respond create event email'));
+                }
             })
             .catch((err)=>{
                 reject('Counld not find user');

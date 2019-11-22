@@ -77,7 +77,11 @@ var User = database.define('User', {
         type: Sequelize.INTEGER,
         defaultValue: 0,
         allowNull: false
-     }
+     },
+     notificationsOn: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
+    }
 });
 
 // Can use sequelize to specify relationships between tables
