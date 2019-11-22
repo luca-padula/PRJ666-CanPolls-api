@@ -161,7 +161,7 @@ app.post('/api/register', [
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
         .isLength({ max: 30 }).withMessage('Username is too long')
-        .not().matches(/@/).withMessage('Invalid character entered for Username')
+        .not().matches(/@/).withMessage('Username cannot contain @ symbol')
         .not().matches(/[ ]{2,}/).withMessage('Username cannot contain more than 1 consecutive whitespace')
         .bail()
         .custom((value) => {
@@ -174,24 +174,24 @@ app.post('/api/register', [
                 return Promise.reject(msg);
             });
         }),
+    check('password')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+        .bail()
+        .custom((value, { req }) => {
+            if (value !== req.body.password2) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        }),
     check('firstName')
         .not().isEmpty().withMessage('First name cannot be empty')
         .isLength({ max: 50 }).withMessage('First name is too long'),
     check('lastName')
         .not().isEmpty().withMessage('Last name cannot be empty')
-        .isLength({ max: 50 }).withMessage('Last name is too long'),
-    check('password')
-        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
-        .matches(/\d/).withMessage('Password must contain a number')
-        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
-        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2')
-        .custom((value, { req }) => {
-            if (value !== req.body.password) {
-                throw new Error('Passwords do not match');
-            }
-            return true;
-        })
+        .isLength({ max: 50 }).withMessage('Last name is too long')
 ], (req, res) => {
     // Fail the request if there are validation errors and return them
     const errors = validationResult(req);

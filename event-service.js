@@ -160,6 +160,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
         });
         eventData.photo = renameImageTo;
         console.log("evdata.photo: "+eventData.photo);
+        eventData.isApproved = false;
         Event.update(eventData, {
             where: {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
@@ -193,6 +194,13 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
         Location.update(locationData, {
             where: {EventEventId: eId}
         })
+            .then(() => {
+                return Event.update({
+                    isApproved: false
+                }, {
+                    where: {event_id: eId}
+                });
+            })
             .then(() => resolve('Location successfully updated'))
             .catch((err) => {
                 console.log(err);
@@ -206,7 +214,7 @@ module.exports.sendEventUpdateEmails = function(eId) {
         this.getRegistrationsWithUsersByEventId(eId)
             .then((registrations) => {
                 for (let i = 0; i < registrations.length; ++i) {
-                    if (registrations[i].status == 'registered') {
+                    if (registrations[i].status == 'registered' && registrations[i].User.notificationsOn) {
                         let mailLink = mailService.appUrl + '\/event\/' + eId;
                         let mailText = 'Hello ' + registrations[i].User.firstName + ',\nAn event for which you are registered has been updated. ' +
                             'You can view the updated event at the link below.\n' + mailLink;
@@ -215,9 +223,7 @@ module.exports.sendEventUpdateEmails = function(eId) {
                             to: registrations[i].User.email,
                             subject: 'PRJ666 CanPolls Event Update',
                             text: mailText
-                        };
-                        console.log(registrations[i].User.notificationsOn);
-                        if(registrations[i].User.notificationsOn == true)
+                        };                        
                         mailService.sendEmail(mailData)
                             .then(() => console.log('Successfully sent event update email to user ' + registrations[i].User.userName))
                             .catch((err) => console.log('Failed to send event update email to user ' + registrations[i].User.userName, err));
