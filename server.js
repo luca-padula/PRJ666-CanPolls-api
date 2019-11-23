@@ -737,7 +737,7 @@ app.post('/api/createFeedback',[
 
 
 app.post('/api/upload',  upload.single('file'), (req, res) => {
-    console.log(JSON.stringify(req.file));
+    //console.log("Req file: "+JSON.stringify(req.file));
     // the file is uploaded when this route is called with formdata.
     // now you can store the file name in the db if you want for further reference.
     const filename = req.file.filename;

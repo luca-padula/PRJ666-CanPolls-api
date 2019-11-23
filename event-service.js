@@ -51,7 +51,13 @@ module.exports.getAllEvents = function(getAll) {
     {
         return new Promise((resolve, reject) => {
             Event.findAll({
-                include: [{model: User, where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated'} } }],
+                include: [
+                    {
+                        model: User, 
+                        where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated' } }
+                     },
+                       { model: Location} ,      
+                    ],
                 where:{
                     isApproved:true, 
                     date_from: { [Op.gt]: new Date().toISOString().slice(0,10) }
@@ -459,21 +465,49 @@ module.exports.approveEvent = function(event_id, data){
             }, {
                 where: {event_id: event.event_id}
             });
-            console.log(event.isApproved); 
             User.findOne({
                 where:{userId: event.UserUserId}
             })
             .then((foundUser)=>{
                 let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
-                if(data.isApproved){
+                if(data.isApproved == "true"){
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
-                    '\nCongratulation! Your event has been approved by our presentative.'+
+                    '\nCongratulation! Your event has been approved by our representative.'+
                     '\nHere is a link to your event.\n' + mailLink;
                 }
                 else{
+                    
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
-                        '\nWe are sorry to inform that your event has been declined by our presentative.';
+                    '\nWe are sorry to inform that your event has been declined by our repesentative.';
+                        console.log("rej count: "+foundUser.rejectionCount)
+                        if(foundUser.rejectionCount >=2)
+                        {
+                            mailText += '\n Seems like your submitted event has been declined a couple of times in past. '+
+                            'Unfortunately, you have been banned from the website. Please contact '+mailService.appFromEmailAddress+' to know more details.\n';
+                            User.update(
+                                {
+                                    accountStatus : 'B',
+                                    notificationsOn : 1
+
+                                },
+                                 {
+                                    where: { userId: foundUser.userId}
+                                 })
+                        }
+                        else
+                        {
+                            foundUser.rejectionCount+=1;
+                                User.update(
+                                {
+                                    rejectionCount : foundUser.rejectionCount
+                                },
+                                 {
+                                    where: { userId: foundUser.userId}
+                                 })
+
+                        }
+
                 }
                 let mailData = {
                     from: mailService.appFromEmailAddress,
