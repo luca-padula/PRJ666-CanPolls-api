@@ -705,6 +705,7 @@ app.get('/api/feedback/:eventId', (req,res)=>{
     eventService.getFeedbackByEventId(req.params.eventId)
     .then((feedback)=>{
         res.json(feedback);
+        console.log(feedback);
     })
     .catch((err)=>{
         res.status(422).json({"message": err});

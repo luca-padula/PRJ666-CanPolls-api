@@ -565,11 +565,12 @@ module.exports.createFeedback = function(feedback){
 
 module.exports.getFeedbackByEventId = function(eventid){
     return new Promise((resolve, reject)=>{
+        console.log(eventid);
         Feedback.findAll({
             where:{EventEventId:eventid}
         })
-        .then((event)=>{
-            resolve(event);
+        .then((feedback)=>{
+            resolve(feedback);
         })
         .catch((err)=>{
             console.log(err.message);
