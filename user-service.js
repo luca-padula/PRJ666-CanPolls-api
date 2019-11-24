@@ -37,6 +37,22 @@ module.exports.getUserById = function(uId) {
     });
 }
 
+module.exports.getUserTokenById = function(uId) {
+    return new Promise((resolve, reject) => {
+        User.findOne({
+            where: {
+                userId: uId
+            }
+        })
+        .then((user) => {
+            resolve(user);
+        })
+        .catch((err) => {
+            reject('Error getting user');
+        })
+    });
+}
+
 module.exports.updateUserInfo = function(userId, userData) {
     return new Promise((resolve, reject) => {
         var emailChanged = 0;
@@ -47,7 +63,6 @@ module.exports.updateUserInfo = function(userId, userData) {
             }
         })
             .then((foundUser) => {
-                //console.log(foundUser);
                 if ( !foundUser || !foundUser.isVerified) {
                     return reject('User not found or Email not verified!');
                 }
@@ -71,13 +86,17 @@ module.exports.updateUserInfo = function(userId, userData) {
                 //USER REQUESTED PARTY CHANGE
                 if(userData.partyAffiliation!= foundUser.partyAffiliation)
                 {
-                    partyChanged = 1;
-                    userData.affiliationApproved = false;
+                    if(userData.partyAffiliation!='Unaffiliated')
+                    {
+                        partyChanged = 1;
+                        userData.affiliationApproved = false;
+                    }
                 }
                 User.update(userData, {
                     where: { userId: foundUser.userId }
                 })
                     .then(() => {
+                            console.log(JSON.stringify(userData));
                             var finalMessage = 'User '+ foundUser.userName + ' successfully updated.';
                             if(emailChanged == 1)
                             {
@@ -393,6 +412,7 @@ module.exports.resetPassword = function(id, token, passwordData) {
 
 module.exports.updatePassword = function(id, password) {
     return new Promise((resolve, reject) => {
+        console.log(password);
         bcrypt.hash(password, 10)
             .then((hash) => {
                 console.log(hash);
@@ -403,6 +423,7 @@ module.exports.updatePassword = function(id, password) {
                 });
             })
             .then((updatedUser) => {
+                
                 resolve('password updated!');
             })
             .catch((err) => {
@@ -574,7 +595,7 @@ module.exports.updUserAffStatus = function(status, foundUser)
                         '\n\nBest.\nCanPolls Team';
                     }
 
-                    let mailData = {
+                        let mailData = {
                         from: mailService.appFromEmailAddress,
                         to: foundUser.email,
                         subject: subjectLine,

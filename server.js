@@ -56,6 +56,25 @@ app.get('/api/users/:userId', (req, res) => {
     });
 });
 
+app.get('/api/userToken/:userId', (req, res) => {
+    userService.getUserTokenById(req.params.userId)
+    .then((user) => {
+        var payload = {
+            userId: user.userId,
+            userName: user.userName,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            partyAffiliation: user.partyAffiliation,
+            affiliationApproved: user.affiliationApproved
+        };
+        var token = jwt.sign(payload, jwtConfig.secret);
+        res.json({ "message": "user: " + user.userName, "token": token });
+    })
+    .catch((msg) => {
+        res.status(422).json({"message": msg});
+    });
+});
+
 app.get('/api/users/:userName', (req, res) => {
     userService.findUserByUsername(req.params.userName).then((msg) => {
         res.json(msg);
@@ -142,7 +161,7 @@ app.post('/api/register', [
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
         .isLength({ max: 30 }).withMessage('Username is too long')
-        .not().matches(/@/).withMessage('Invalid character entered for Username')
+        .not().matches(/@/).withMessage('Username cannot contain @ symbol')
         .not().matches(/[ ]{2,}/).withMessage('Username cannot contain more than 1 consecutive whitespace')
         .bail()
         .custom((value) => {
@@ -155,24 +174,24 @@ app.post('/api/register', [
                 return Promise.reject(msg);
             });
         }),
+    check('password')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+        .bail()
+        .custom((value, { req }) => {
+            if (value !== req.body.password2) {
+                throw new Error('Passwords do not match');
+            }
+            return true;
+        }),
     check('firstName')
         .not().isEmpty().withMessage('First name cannot be empty')
         .isLength({ max: 50 }).withMessage('First name is too long'),
     check('lastName')
         .not().isEmpty().withMessage('Last name cannot be empty')
-        .isLength({ max: 50 }).withMessage('Last name is too long'),
-    check('password')
-        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
-        .matches(/\d/).withMessage('Password must contain a number')
-        .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
-        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
-    check('password2')
-        .custom((value, { req }) => {
-            if (value !== req.body.password) {
-                throw new Error('Passwords do not match');
-            }
-            return true;
-        })
+        .isLength({ max: 50 }).withMessage('Last name is too long')
 ], (req, res) => {
     // Fail the request if there are validation errors and return them
     const errors = validationResult(req);
@@ -291,8 +310,10 @@ app.put('/api/updatePassword/:userId' , [
             if (!errors.isEmpty()) {
                 return res.status(422).json({ "validationErrors": errors.array() });
             }
-            var newPass = JSON.stringify(req.body.password);
-            userService.checkUser2(req.body.currentUser, req.body.curPass, newPass)
+           // var newPass = JSON.stringify(req.body.password);
+            //console.log("Newoass: "+newPass);
+            //console.log("Newoass: "+req.body.password);
+            userService.checkUser2(req.body.currentUser, req.body.curPass, req.body.password)
             .then((user) => {
                 res.json({user});
             })
@@ -401,13 +422,23 @@ app.post('/api/createEvent',[
         .not().isEmpty().withMessage('Event Description cannot be empty')
         .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
     check('date_from')
-        .isAfter().withMessage('You entered a start date that has already passed'),
-    check('date_to')
+       // .isAfter().withMessage('You entered a start date that has already passed')
+    //check('date_to')
         .custom((value, { req }) => {
+            console.log("inside date from");
+            var curDate = new Date().toISOString().slice(0,10);
+
+            if(value <=curDate)
+            {
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+            }
+
+            console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
             let start = new Date(req.body.date_from + ' ' + req.body.time_from);
-            let end = new Date(value + ' ' + req.body.time_to);
+            let end = new Date(req.body.date_from + ' ' + req.body.time_to);
             if (start >= end) {
-                throw new Error('Invalid end date or time! Note: Start Date and Start Time should be greater than End Date and End Time.');
+                console.log("throwing error");
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
             }
             return true;
         })
@@ -435,8 +466,10 @@ app.get('/api/event/:event_id', (req, res) => {
         });
 });
 
-app.get('/api/events', (req, res) => {
-    eventService.getAllEvents()
+app.get('/api/events/:getAll', (req, res) => {
+    var getALL= req.params.getAll;
+    console.log("getAll: "+getALL);
+    eventService.getAllEvents(getALL)
         .then((events) => {
             res.json(events);
         })
@@ -488,13 +521,24 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             return true;
         }),
     check('date_from')
-        .isAfter().withMessage('You entered a start date that has already passed'),
-    check('date_to')
+      //  .isAfter().withMessage('You entered a start date that has already passed')
+   // check('date_to')
         .custom((value, { req }) => {
+
+            console.log("inside date from");
+            var curDate = new Date().toISOString().slice(0,10);
+
+            if(value <=curDate)
+            {
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+            }
+
+            console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
             let start = new Date(req.body.date_from + ' ' + req.body.time_from);
-            let end = new Date(value + ' ' + req.body.time_to);
+            let end = new Date(req.body.date_from + ' ' + req.body.time_to);
             if (start >= end) {
-                throw new Error('Invalid end date entered');
+                console.log("throwing error");
+                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
             }
             return true;
         })
@@ -619,7 +663,7 @@ app.get('/api/events/attendedByUser/:userId', (req, res) => {
 });
 
 
-// This route returns a count of all the registrations (registration status is not 'removed') for a given event id
+// This route returns a count of all the registrations (registration status is 'registered') for a given event id
 app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getRegistrationsWithCount(req.params.eventId)
         .then((result) => res.json(result.count))
@@ -714,7 +758,7 @@ app.get('/api/feedback/:eventId', (req,res)=>{
 
 
 app.post('/api/upload',  upload.single('file'), (req, res) => {
-    console.log(JSON.stringify(req.file));
+    //console.log("Req file: "+JSON.stringify(req.file));
     // the file is uploaded when this route is called with formdata.
     // now you can store the file name in the db if you want for further reference.
     const filename = req.file.filename;

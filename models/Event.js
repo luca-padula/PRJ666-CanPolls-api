@@ -30,10 +30,10 @@ var Event = database.define('Event', {
         type: Sequelize.STRING,
         allowNull:false
     },
-    date_to:{
+   /* date_to:{
         type: Sequelize.STRING,
         allowNull:false
-    },
+    },*/
     time_from:{
         type:Sequelize.STRING,
         allowNull:false
