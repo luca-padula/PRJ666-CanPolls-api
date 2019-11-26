@@ -681,6 +681,8 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
         });
 });
 
+
+
 app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.registerUserForEvent(req.params.eventId, req.params.userId)
         .then((msg) => {
@@ -743,6 +745,17 @@ app.post('/api/createFeedback',[
         res.status(422).json({"message": msg});
     });
 })
+
+app.get('/api/feedback/:eventId', (req,res)=>{
+    eventService.getFeedbackByEventId(req.params.eventId)
+    .then((feedback)=>{
+        res.json(feedback);
+        console.log(feedback);
+    })
+    .catch((err)=>{
+        res.status(422).json({"message": err});
+    });
+});
 
 
 app.post('/api/upload',  upload.single('file'), (req, res) => {
