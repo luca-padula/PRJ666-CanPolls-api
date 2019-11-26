@@ -187,11 +187,15 @@ app.post('/api/register', [
             return true;
         }),
     check('firstName')
+        .trim()
         .not().isEmpty().withMessage('First name cannot be empty')
-        .isLength({ max: 50 }).withMessage('First name is too long'),
+        .isLength({ max: 50 }).withMessage('First name is too long')
+        .not().matches(/[^a-zA-Z'\-]/).withMessage('First name may only contain alphabetic characters, apostrophe ( \' ), and hyphen ( \- )'),
     check('lastName')
+        .trim()
         .not().isEmpty().withMessage('Last name cannot be empty')
         .isLength({ max: 50 }).withMessage('Last name is too long')
+        .not().matches(/[^a-zA-Z'\-]/).withMessage('Last name may only contain alphabetic characters, apostrophe ( \' ), and hyphen ( \- )')
 ], (req, res) => {
     // Fail the request if there are validation errors and return them
     const errors = validationResult(req);
@@ -508,12 +512,16 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
-        .isLength({max: 80}).withMessage('Event title is too long'),
+        .isAscii().withMessage('Invalid characters entered for event title')
+        .isLength({max: 100}).withMessage('Event title is too long'),
     check('event_description')
         .trim()
-        .not().isEmpty().withMessage('Event description cannot be empty'),
+        .not().isEmpty().withMessage('Event description cannot be empty')
+        .isAscii().withMessage('Invalid characters entered for event description')
+        .isLength({max: 255}).withMessage('Event description is too long'),
     check('attendee_limit')
-        .isNumeric()
+        .isNumeric().withMessage('Invalid attendee limit entered')
+        .bail()
         .custom((value, { req }) => {
             if (value < 0) {
                 throw new Error('Invalid attendee limit entered');
@@ -521,8 +529,6 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             return true;
         }),
     check('date_from')
-      //  .isAfter().withMessage('You entered a start date that has already passed')
-   // check('date_to')
         .custom((value, { req }) => {
 
             console.log("inside date from");
@@ -581,16 +587,19 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
     check('venue_name')
         .trim()
         .not().isEmpty().withMessage('Venue name cannot be empty')
+        .isAscii().withMessage('Invalid characters entered for venue name')
         .isLength({max: 100}).withMessage('Venue name is too long'),
     check('postal_code')
         .trim()
         .isPostalCode('CA').withMessage('Invalid postal code entered'),
     check('street_name')
         .trim()
-        .not().isEmpty().withMessage('Street cannot be empty'),
+        .not().isEmpty().withMessage('Street cannot be empty')
+        .isAscii().withMessage('Invalid characters entered for street name'),
     check('city')
         .trim()
         .not().isEmpty().withMessage('City cannot be empty')
+        .isAscii().withMessage('Invalid characters entered for street name')
 ], (req, res) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()){

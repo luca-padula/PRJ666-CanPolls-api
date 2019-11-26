@@ -250,7 +250,8 @@ module.exports.findUserByUsername = function(username) {
             resolve(user);
         })
         .catch((err) => {
-            reject('An error occured');
+            console.log(err);
+            reject('Invalid username given');
         })
     });
 }
@@ -266,7 +267,8 @@ module.exports.findUserByEmail = function(email) {
             resolve(user);
         })
         .catch((err) => {
-            reject('An error occured');
+            console.log(err);
+            reject('Invalid email given');
         })
     });
 }
