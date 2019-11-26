@@ -672,15 +672,7 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
         });
 });
 
-app.get('/api/events/byProvince/:province', (req, res) => {
-    eventService.getEventsByProvince(req.params.province)
-        .then((event) => {
-            res.json(event);
-        })
-        .catch((err) => {
-            res.status(422).json({ "message": err });
-        });
-});
+
 
 app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.registerUserForEvent(req.params.eventId, req.params.userId)

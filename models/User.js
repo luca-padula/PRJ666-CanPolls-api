@@ -6,7 +6,8 @@ const Sequelize = require('sequelize');
 const databaseWrapper = require('../database.js');
 const EventModel = require('./Event.js');
 const EventRegistrationModel = require('./EventRegistration.js');
-
+const FeedbackModel = require('./Feedback.js');
+let Feedback = FeedbackModel.Feedback;
 let Event = EventModel.Event;
 let EventRegistration = EventRegistrationModel.EventRegistration;
 
@@ -91,7 +92,7 @@ var User = database.define('User', {
  Event.belongsTo(User);
  User.hasMany(EventRegistration);
  EventRegistration.belongsTo(User);
-
+Feedback.belongsTo(User);
 // see https://web322.ca/notes/week07 for more details
 
 // Export User model to use in other modules

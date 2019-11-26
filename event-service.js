@@ -581,14 +581,7 @@ module.exports.getAllEventsWithUser = function() {
     });
 }
 
-module.exports.getEventsByProvince = function(province){
-    return new Promise((resolve, reject)=>{
-        Location.findAll({
-            where:{province: province}
-        })
-        .then()
-    })
-}
+
 module.exports.updateEventStatus = function(eventId, statusVal)
 {
     return new Promise((resolve, reject) => {
@@ -628,10 +621,16 @@ module.exports.getFeedbackByEventId = function(eventid){
     return new Promise((resolve, reject)=>{
         console.log(eventid);
         Feedback.findAll({
+            include: [
+                {
+                    model: User
+                 }     
+                ],
             where:{EventEventId:eventid}
         })
         .then((feedback)=>{
             resolve(feedback);
+            console.log(feedback);
         })
         .catch((err)=>{
             console.log(err.message);

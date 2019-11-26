@@ -24,10 +24,6 @@ var Feedback = database.define('Feedback', {
     feedback_date:{
         type: Sequelize.STRING,
         allowNull: false
-    },
-    userUserId:{
-        type:Sequelize.INTEGER,
-        allowNull:false
     }
 });
 
