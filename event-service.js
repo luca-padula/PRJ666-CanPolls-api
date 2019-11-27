@@ -76,7 +76,13 @@ module.exports.getAllEvents = function(getAll) {
     {
     return new Promise((resolve, reject) => {
         Event.findAll({
-            include: [{model: User, where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated'} } }],
+            include: [
+                {
+                    model: User, 
+                    where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated' } }
+                 },
+                   { model: Location} ,      
+                ],
             where:{
                 isApproved:true
             }

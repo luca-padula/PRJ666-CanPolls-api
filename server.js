@@ -100,13 +100,15 @@ app.put('/api/updateUser/:userId', [
             });
         }),
         check('firstName')
-        .trim()//+*?^$()[/]{}]
-        .not().matches(/[^a-zA-Z ]/).withMessage('Firstname cannot contain anything but letters!')
-        .bail(),
-        check('lastName')
-        .trim()//+*?^$()[/]{}]
-        .not().matches(/[^a-zA-Z ]/).withMessage('Lastname cannot contain anything but letters!')
-        .bail(),
+        .trim()
+        .not().isEmpty().withMessage('First name cannot be empty')
+        .isLength({ max: 50 }).withMessage('First name is too long')
+        .not().matches(/[^a-zA-Z'\-]/).withMessage('First name may only contain alphabetic characters, apostrophe ( \' ), and hyphen ( \- )'),
+    check('lastName')
+        .trim()
+        .not().isEmpty().withMessage('Last name cannot be empty')
+        .isLength({ max: 50 }).withMessage('Last name is too long')
+        .not().matches(/[^a-zA-Z'\-]/).withMessage('Last name may only contain alphabetic characters, apostrophe ( \' ), and hyphen ( \- )'),
         check('userName')
         .trim()
         .not().isEmpty().withMessage('Username cannot be empty')
@@ -434,7 +436,7 @@ app.post('/api/createEvent',[
 
             if(value <=curDate)
             {
-                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+                throw new Error('Invalid end date or time! Please do not enter todays\' date, passed date or uncoupled timings.');
             }
 
             console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
@@ -442,7 +444,7 @@ app.post('/api/createEvent',[
             let end = new Date(req.body.date_from + ' ' + req.body.time_to);
             if (start >= end) {
                 console.log("throwing error");
-                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+                throw new Error('Invalid end date or time! Please do not enter todays\' date, passed date or uncoupled timings.');
             }
             return true;
         })

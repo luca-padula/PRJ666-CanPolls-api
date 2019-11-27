@@ -483,15 +483,26 @@ module.exports.deleteUser = function (userID)
                 where: { userId: user.userId }
             })
             let mailText = 'Hello ' + foundUserFname + ',\nAs per your request, ' +
-            'your account has been deleted. Thanks for being a part of CanPolls. You can SignUp again anytime.\n\n' +
-            'We hope to see you soon\n\n'+
-            'Best.\nCanPolls Team';
+            ' your account on CanPolls has been deleted. You will no longer receive any notifications '+
+            'from the website. Any events that you have created will no longer be valid, and you will be removed'+
+            ' from any events that you have signed up for.\n\n' +
+            'Thank you for being a part of CanPolls. '+
+            'You can ' +appUrl+'/register' + ' for a new CanPolls account again at any time. We hope to see you soon\n\n'+
+            'All the best,\nCanPolls Team';
             let mailData = {
             from: mailService.appFromEmailAddress,
             to: foundUserEmail,
-            subject: 'PRJ666 CanPolls - We are sad to See You Go',
+            subject: 'PRJ666 CanPolls - We are sad to see you go',
             text: mailText
             };
+            /*Hello [[user]],
+
+As per your request, your account on CanPolls has been deleted. You will no longer receive any notifications from the website. Any events that you have created will no longer be valid, and you will be removed from any events that you have signed up for.
+
+
+
+All the best,
+CanPolls Team */
 
             mailService.sendEmail(mailData)
             .then(() => {
@@ -513,7 +524,8 @@ module.exports.getAllUsersByParty = function(partyName) {
     return new Promise((resolve, reject) => {
         User.findAll({
             where: {
-            partyAffiliation: partyName
+            partyAffiliation: partyName,
+            isAdmin: 0
                 }
         })
             .then((users) => {
