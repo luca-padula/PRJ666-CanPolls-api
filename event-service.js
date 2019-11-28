@@ -160,6 +160,7 @@ module.exports.createEvent = function(eventData){
             
         })
         .catch((err) =>{
+            console.log(err);
             reject('Couldn\'t submit event');
         })
     });
@@ -291,7 +292,7 @@ module.exports.getRegistrationsWithCount = function(eventId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAndCountAll({
             where: {
-                status: 'registered'
+                [Op.and]: [{EventEventId: eventId}, {status: 'registered'}]
             }
         })
             .then((result) => resolve(result))
@@ -422,7 +423,7 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
             status: 'removed'
         }, {
             where: {
-                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}]
+                [Op.and]: [{EventEventId: eventId}, {UserUserId: userId}, {status: 'registered'}]
             }
         })
             .then((updatedRegistrations) => {
