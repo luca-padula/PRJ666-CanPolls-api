@@ -424,6 +424,15 @@ app.post('/api/createEvent',[
         .not().isAscii().withMessage('Event Title cannot contain invalid character')
         .not().isEmpty().withMessage('Event title cannot be empty')
         .isLength({max: 100}).withMessage('Event title is too long'),
+    check('attendee_limit')
+        .isNumeric().withMessage('Invalid attendee limit entered')
+        .bail()
+        .custom((value, { req }) => {
+            if (value < 0) {
+                throw new Error('Invalid attendee limit entered');
+            }
+            return true;
+        }),
     check('event_description')
         .trim()
         .not().isAscii().withMessage('Event Description cannot contain invalid character')
@@ -437,8 +446,11 @@ app.post('/api/createEvent',[
         .not().isAscii().withMessage('Street Name cannot contain anything but letters and number!')
         .not().isEmpty().withMessage('Street Name cannot be empty'),
     check('city')
-        .not().matches(/[^a-zA-Z ]/).withMessage('City cannot contain anything but letters!')
-        .not().isEmpty().withMessage('City cannot be empty'),
+        .trim()
+        .not().isEmpty().withMessage('City cannot be empty')
+        .bail()
+        .isAscii().withMessage('Invalid characters entered for street name')
+        .isLength({max: 30}).withMessage('City is too long'),
     check('province')
         .not().isEmpty().withMessage('Province cannot be empty'),    
     check('postal_code')
@@ -534,11 +546,13 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
     check('event_title')
         .trim()
         .not().isEmpty().withMessage('Event title cannot be empty')
+        .bail()
         .isAscii().withMessage('Invalid characters entered for event title')
         .isLength({max: 100}).withMessage('Event title is too long'),
     check('event_description')
         .trim()
         .not().isEmpty().withMessage('Event description cannot be empty')
+        .bail()
         .isAscii().withMessage('Invalid characters entered for event description')
         .isLength({max: 255}).withMessage('Event description is too long'),
     check('attendee_limit')
@@ -577,8 +591,13 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
     }
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
+            let now = new Date();
+            let editDeadline = new Date(foundEvent.date_from + ' ' + foundEvent.time_from);
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to edit this event');
+            }
+            else if ( now >= editDeadline) {
+                return Promise.reject('It is too late to edit this event');
             }
             else {
                 return eventService.updateEventById(req.params.eventId, req.user.userId, req.body);
@@ -609,6 +628,7 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
     check('venue_name')
         .trim()
         .not().isEmpty().withMessage('Venue name cannot be empty')
+        .bail()
         .isAscii().withMessage('Invalid characters entered for venue name')
         .isLength({max: 100}).withMessage('Venue name is too long'),
     check('postal_code')
@@ -617,11 +637,15 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
     check('street_name')
         .trim()
         .not().isEmpty().withMessage('Street cannot be empty')
-        .isAscii().withMessage('Invalid characters entered for street name'),
+        .bail()
+        .isAscii().withMessage('Invalid characters entered for street name')
+        .isLength({max: 80}).withMessage('Street name is too long'),
     check('city')
         .trim()
         .not().isEmpty().withMessage('City cannot be empty')
+        .bail()
         .isAscii().withMessage('Invalid characters entered for street name')
+        .isLength({max: 30}).withMessage('City is too long')
 ], (req, res) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()){
@@ -629,8 +653,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
     }
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
+            let now = new Date();
+            let editDeadline = new Date(foundEvent.date_from + ' ' + foundEvent.time_from);
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to edit this location');
+            }
+            else if ( now >= editDeadline) {
+                return Promise.reject('It is too late to edit this location');
             }
             else {
                 return eventService.updateLocationByEventId(req.params.eventId, req.body);
