@@ -30,6 +30,10 @@ Events = function(){
 module.exports.getEventById = function(eId){
     return new Promise((resolve, reject)=>{
         Event.findOne({
+            include: [
+                {model: User},
+                { model: Location} ,      
+                ],
             where:{event_id: eId}
         })
         .then((event) => {
@@ -451,6 +455,7 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
 
 module.exports.approveEvent = function(event_id, data){
     return new Promise((resolve,reject)=>{
+        console.log(data.isApproved);
         Event.findOne( {
             where: {
                 event_id: event_id
@@ -471,7 +476,7 @@ module.exports.approveEvent = function(event_id, data){
             .then((foundUser)=>{
                 let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
-                if(data.isApproved == "true"){
+                if(data.isApproved){
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nCongratulation! Your event has been approved by our representative.'+
                     '\nHere is a link to your event.\n' + mailLink;

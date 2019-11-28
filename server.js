@@ -415,12 +415,30 @@ app.post('/api/createEvent',[
     }),
     check('event_title')
         .trim()
+        .not().matches(/[^0-9a-zA-Z ]/).withMessage('Event Title cannot contain anything but letters!')
         .not().isEmpty().withMessage('Event title cannot be empty')
-        .isLength({max: 50}).withMessage('Event title is too long'),
+        .isLength({max: 100}).withMessage('Event title is too long'),
     check('event_description')
         .trim()
+        .not().matches(/[^a-zA-Z ]/).withMessage('Event Description cannot contain anything but letters!')
         .not().isEmpty().withMessage('Event Description cannot be empty')
         .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
+    check('venue_name')
+        .trim()
+        .not().matches(/[^a-zA-Z ]/).withMessage('Venue Name cannot contain anything but letters!')
+        .not().isEmpty().withMessage('Venue Name cannot be empty'),
+    check('street_name')
+        .not().matches(/[^0-9a-zA-Z ]/).withMessage('Street Name cannot contain anything but letters and number!')
+        .not().isEmpty().withMessage('Street Name cannot be empty'),
+    check('city')
+        .not().matches(/[^a-zA-Z ]/).withMessage('City cannot contain anything but letters!')
+        .not().isEmpty().withMessage('City cannot be empty'),
+    check('province')
+        .not().matches(/[^a-zA-Z ]/).withMessage('Province cannot contain anything but letters!')
+        .not().isEmpty().withMessage('Province cannot be empty'),    
+    check('postal_code')
+        .not().matches(/[^0-9a-zA-Z ]/).withMessage('Invalid Postal Code')
+        .not().isEmpty().withMessage('Postal Code cannot be empty'),
     check('date_from')
        // .isAfter().withMessage('You entered a start date that has already passed')
     //check('date_to')
