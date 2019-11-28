@@ -420,12 +420,12 @@ app.post('/api/createEvent',[
         .isLength({max: 100}).withMessage('Event title is too long'),
     check('event_description')
         .trim()
-        .not().matches(/[^a-zA-Z ]/).withMessage('Event Description cannot contain anything but letters!')
+        .not().matches(/[^0-9a-zA-Z ]/).withMessage('Event Description cannot contain anything but letters!')
         .not().isEmpty().withMessage('Event Description cannot be empty')
         .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
     check('venue_name')
         .trim()
-        .not().matches(/[^a-zA-Z ]/).withMessage('Venue Name cannot contain anything but letters!')
+        .not().matches(/[^0-9a-zA-Z ]/).withMessage('Venue Name cannot contain anything but letters!')
         .not().isEmpty().withMessage('Venue Name cannot be empty'),
     check('street_name')
         .not().matches(/[^0-9a-zA-Z ]/).withMessage('Street Name cannot contain anything but letters and number!')
