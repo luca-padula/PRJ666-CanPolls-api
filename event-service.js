@@ -80,7 +80,13 @@ module.exports.getAllEvents = function(getAll) {
     {
     return new Promise((resolve, reject) => {
         Event.findAll({
-            include: [{model: User, where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated'} } }],
+            include: [
+                {
+                    model: User, 
+                    where:{ partyAffiliation: { [Op.ne]: 'Unaffiliated' } }
+                 },
+                   { model: Location} ,      
+                ],
             where:{
                 isApproved:true
             }
@@ -397,7 +403,7 @@ module.exports.sendEventRegistrationNoticeToOwner = function(eventId, updateType
                     };
                     console.log(user.notificationsOn);
                     if(user.notificationsOn == true)
-                    return mailService.sendEmail(mailData);
+                        return mailService.sendEmail(mailData);
                 }
                 else
                     return reject('Invalid user to send email');
