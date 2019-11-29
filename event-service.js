@@ -119,7 +119,8 @@ module.exports.createEvent = function(eventData){
         .then(()=>{
                  Event.findAll({})
                  .then((events)=>{
-                    console.log("location entered: "+JSON.stringify(eventData));
+                     eventData.postal_code = eventData.postal_code.toUpperCase();
+                     console.log("location entered: "+JSON.stringify(eventData));
 
                      Location.create({
                         venue_name: eventData.venue_name,

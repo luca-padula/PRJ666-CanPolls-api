@@ -421,7 +421,7 @@ app.post('/api/createEvent',[
     }),
     check('event_title')
         .trim()
-        .not().isAscii().withMessage('Event Title cannot contain invalid character')
+        .isAscii().withMessage('Event Title cannot contain invalid character')
         .not().isEmpty().withMessage('Event title cannot be empty')
         .isLength({max: 100}).withMessage('Event title is too long'),
     check('attendee_limit')
@@ -435,22 +435,24 @@ app.post('/api/createEvent',[
         }),
     check('event_description')
         .trim()
-        .not().isAscii().withMessage('Event Description cannot contain invalid character')
+        .isAscii().withMessage('Event Description cannot contain invalid character')
         .not().isEmpty().withMessage('Event Description cannot be empty')
-        .isLength({max: 500}).withMessage('Event description cannot be more than 500 characters'),
+        .isLength({max: 255}).withMessage('Event description cannot be more than 255 characters'),
     check('venue_name')
         .trim()
-        .not().isAscii().withMessage('Venue Name cannot contain invalid character')
-        .not().isEmpty().withMessage('Venue Name cannot be empty'),
+        .isAscii().withMessage('Venue Name cannot contain invalid character')
+        .not().isEmpty().withMessage('Venue Name cannot be empty')
+        .isLength({max: 100}).withMessage('Venue name cannot be more than 100 characters'),
     check('street_name')
-        .not().isAscii().withMessage('Street Name cannot contain anything but letters and number!')
-        .not().isEmpty().withMessage('Street Name cannot be empty'),
+        .isAscii().withMessage('Street Name cannot contain anything but letters and number!')
+        .not().isEmpty().withMessage('Street Name cannot be empty')
+        .isLength({max: 80}).withMessage('Street name cannot be more than 30 characters'),
     check('city')
         .trim()
         .not().isEmpty().withMessage('City cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for street name')
-        .isLength({max: 30}).withMessage('City is too long'),
+        .isLength({max: 30}).withMessage('City cannot be more than 30 characters'),
     check('province')
         .not().isEmpty().withMessage('Province cannot be empty'),    
     check('postal_code')
@@ -548,13 +550,13 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         .not().isEmpty().withMessage('Event title cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for event title')
-        .isLength({max: 100}).withMessage('Event title is too long'),
+        .isLength({max: 100}).withMessage('Event title cannot be more than 100 characters'),
     check('event_description')
         .trim()
         .not().isEmpty().withMessage('Event description cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for event description')
-        .isLength({max: 255}).withMessage('Event description is too long'),
+        .isLength({max: 255}).withMessage('Event description cannot be more than 255 characters'),
     check('attendee_limit')
         .isNumeric().withMessage('Invalid attendee limit entered')
         .bail()
@@ -630,7 +632,7 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         .not().isEmpty().withMessage('Venue name cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for venue name')
-        .isLength({max: 100}).withMessage('Venue name is too long'),
+        .isLength({max: 100}).withMessage('Venue name cannot be more than 100 characters'),
     check('postal_code')
         .trim()
         .isPostalCode('CA').withMessage('Invalid postal code entered'),
@@ -639,13 +641,13 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         .not().isEmpty().withMessage('Street cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for street name')
-        .isLength({max: 80}).withMessage('Street name is too long'),
+        .isLength({max: 80}).withMessage('Street name cannot be more than 80 characters'),
     check('city')
         .trim()
         .not().isEmpty().withMessage('City cannot be empty')
         .bail()
         .isAscii().withMessage('Invalid characters entered for street name')
-        .isLength({max: 30}).withMessage('City is too long')
+        .isLength({max: 30}).withMessage('City cannot be more than 30 characters')
 ], (req, res) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()){
