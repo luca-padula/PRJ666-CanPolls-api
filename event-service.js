@@ -178,7 +178,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
         });
         eventData.photo = renameImageTo;
         console.log("evdata.photo: "+eventData.photo);
-        eventData.isApproved = false;
+        eventData.status = 'P';
         Event.update(eventData, {
             where: {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
@@ -214,7 +214,7 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
         })
             .then(() => {
                 return Event.update({
-                    isApproved: false
+                    status: 'P'
                 }, {
                     where: {event_id: eId}
                 });

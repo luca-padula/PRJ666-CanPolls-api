@@ -56,7 +56,7 @@ var User = database.define('User', {
         allowNull: false
     },
     accountStatus: {
-           type: Sequelize.CHAR,
+           type: Sequelize.CHAR(1),
              defaultValue: 'A',
              allowNull: false
     },
