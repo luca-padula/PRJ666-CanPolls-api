@@ -46,9 +46,10 @@ var Event = database.define('Event', {
         type:Sequelize.INTEGER,
         allowNull:false
     },
-    isApproved:{
-        type:Sequelize.STRING,
-        allowNull:false
+    status:{
+        type:Sequelize.CHAR(1),
+        allowNull: false,
+        defaultValue: 'P'
     }
 });
 

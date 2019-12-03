@@ -63,7 +63,7 @@ module.exports.getAllEvents = function(getAll) {
                        { model: Location} ,      
                     ],
                 where:{
-                    isApproved: "a", 
+                    status: 'A', 
                     date_from: { [Op.gt]: new Date().toISOString().slice(0,10) }
                 }
             })
@@ -88,7 +88,7 @@ module.exports.getAllEvents = function(getAll) {
                    { model: Location} ,      
                 ],
             where:{
-                isApproved:"a"
+                status: 'A'
             }
         })
             .then((events) => {
@@ -113,7 +113,7 @@ module.exports.createEvent = function(eventData){
             time_from: eventData.time_from,
             time_to: eventData.time_to,
             attendee_limit: eventData.attendee_limit,
-            isApproved: eventData.isApproved,
+            status: 'P',
             UserUserId: eventData.userId
         })
         .then(()=>{
@@ -178,7 +178,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
         });
         eventData.photo = renameImageTo;
         console.log("evdata.photo: "+eventData.photo);
-        eventData.isApproved = false;
+        eventData.status = 'P';
         Event.update(eventData, {
             where: {
                 [Op.and]: [{event_id: eId}, {UserUserId: uId}]
@@ -214,7 +214,7 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
         })
             .then(() => {
                 return Event.update({
-                    isApproved: false
+                    status: 'P'
                 }, {
                     where: {event_id: eId}
                 });
@@ -462,19 +462,19 @@ module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
 }
 
 module.exports.approveEvent = function(event_id, data){
-    return new Promise((resolve,reject)=>{
-        console.log(data.isApproved);
+    return new Promise((resolve,reject)=>{ 
         Event.findOne( {
             where: {
                 event_id: event_id
             }
         })
-        .then((event)=>{
+        .then((event)=>{ 
+            console.log("Status: "+JSON.stringify(data.status));
             if(!event){
                 return reject('Link id is wrong');
             }
             Event.update({
-                isApproved: data.isApproved
+                status: data.status
             }, {
                 where: {event_id: event.event_id}
             });
@@ -484,12 +484,12 @@ module.exports.approveEvent = function(event_id, data){
             .then((foundUser)=>{
                 let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
-                if(data.isApproved == "a"){
+                if(data.status == "A"){
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nCongratulation! Your event has been approved by our representative.'+
                     '\nHere is a link to your event.\n' + mailLink;
                 }
-                else {
+                else if(data.status == "D"){
                     
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nWe are sorry to inform that your event has been declined by our repesentative.';
@@ -522,18 +522,22 @@ module.exports.approveEvent = function(event_id, data){
                         }
 
                 }
-                let mailData = {
-                    from: mailService.appFromEmailAddress,
-                    to: foundUser.email,
-                    subject: 'PRJ666 CanPolls Create Event',
-                    text: mailText
-                };
-                console.log("notification: "+foundUser.notificationsOn);
-                if(foundUser.notificationsOn == true)
+              
+                if(data.status != "P")
                 {
-                    mailService.sendEmail(mailData)
-                    .then(()=>resolve('Event ' + event.event_title +'successfully updated'))
-                    .catch((msg)=> reject('Error sending respond create event email'));
+                    let mailData = {
+                        from: mailService.appFromEmailAddress,
+                        to: foundUser.email,
+                        subject: 'PRJ666 CanPolls Create Event',
+                        text: mailText
+                    };
+                    console.log("notification: "+foundUser.notificationsOn);
+                    if(foundUser.notificationsOn == true)
+                    {
+                        mailService.sendEmail(mailData)
+                        .then(()=>resolve('Event ' + event.event_title +'successfully updated'))
+                        .catch((msg)=> reject('Error sending respond create event email'));
+                    }
                 }
             })
             .catch((err)=>{
