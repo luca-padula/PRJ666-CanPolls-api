@@ -47,7 +47,7 @@ var Event = database.define('Event', {
         allowNull:false
     },
     isApproved:{
-        type:Sequelize.BOOLEAN,
+        type:Sequelize.STRING,
         allowNull:false
     }
 });

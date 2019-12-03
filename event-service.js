@@ -63,7 +63,7 @@ module.exports.getAllEvents = function(getAll) {
                        { model: Location} ,      
                     ],
                 where:{
-                    isApproved:true, 
+                    isApproved: "a", 
                     date_from: { [Op.gt]: new Date().toISOString().slice(0,10) }
                 }
             })
@@ -88,7 +88,7 @@ module.exports.getAllEvents = function(getAll) {
                    { model: Location} ,      
                 ],
             where:{
-                isApproved:true
+                isApproved:"a"
             }
         })
             .then((events) => {
@@ -113,7 +113,7 @@ module.exports.createEvent = function(eventData){
             time_from: eventData.time_from,
             time_to: eventData.time_to,
             attendee_limit: eventData.attendee_limit,
-            isApproved: false,
+            isApproved: eventData.isApproved,
             UserUserId: eventData.userId
         })
         .then(()=>{
@@ -484,12 +484,12 @@ module.exports.approveEvent = function(event_id, data){
             .then((foundUser)=>{
                 let mailText;
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
-                if(data.isApproved){
+                if(data.isApproved == "a"){
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nCongratulation! Your event has been approved by our representative.'+
                     '\nHere is a link to your event.\n' + mailLink;
                 }
-                else{
+                else {
                     
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
                     '\nWe are sorry to inform that your event has been declined by our repesentative.';
