@@ -585,13 +585,18 @@ module.exports.approveEvent = function(event_id, data){
                 let mailLink = mailService.appUrl + '\/event\/' + event.event_id; 
                 if(data.status == "A"){
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
-                    '\nCongratulation! Your event has been approved by our representative.'+
+                    '\nCongratulations! Your event has been approved by the administrator of your party'+
+                    '\nHere is a link to your event.\n' + mailLink;
+                }
+                else if (data.status == "C"){
+                    mailText = 'Hello,\nThis is an email to reply to your event.'+
+                    '\nWe are sorry to inform you that your event has been cancelled by the administrator of your party'+
                     '\nHere is a link to your event.\n' + mailLink;
                 }
                 else if(data.status == "D"){
                     
                     mailText = 'Hello,\nThis is an email to reply to your event.'+
-                    '\nWe are sorry to inform that your event has been declined by our repesentative.';
+                    '\nWe are sorry to inform you that your event has been declined by the administrator of your party.';
                         console.log("rej count: "+foundUser.rejectionCount)
                         if(foundUser.rejectionCount >=2)
                         {
