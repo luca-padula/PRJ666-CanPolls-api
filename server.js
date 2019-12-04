@@ -569,20 +569,23 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
     check('date_from')
         .custom((value, { req }) => {
 
-            console.log("inside date from");
-            var curDate = new Date().toISOString().slice(0,10);
-
-            if(value <=curDate)
-            {
-                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+            if (!value) {
+                throw new Error('Invalid date entered');
             }
-
             console.log("checking start: "+req.body.date_from + ' ' + req.body.time_from+"\nend: "+req.body.date_from + ' ' + req.body.time_to);
-            let start = new Date(req.body.date_from + ' ' + req.body.time_from);
-            let end = new Date(req.body.date_from + ' ' + req.body.time_to);
+            let start = new Date(value + ' ' + req.body.time_from);
+            let end = new Date(value + ' ' + req.body.time_to);
+            let curDate = new Date();
+            if(start <= curDate) {
+                throw new Error('Please enter a date and time that has not already passed');
+            }
             if (start >= end) {
-                console.log("throwing error");
-                throw new Error('Invalid end date or time! Please do not enter passed date or uncoupled timings.');
+                throw new Error('Please enter an end time that is after the start time');
+            }
+            let twoYearsFromNow = curDate;
+            twoYearsFromNow.setFullYear(curDate.getFullYear() + 2);
+            if (start > twoYearsFromNow) {
+                throw new Error('Please enter a start date and time that is less than 2 years away');
             }
             return true;
         })
@@ -600,6 +603,9 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
             }
             else if ( now >= editDeadline) {
                 return Promise.reject('It is too late to edit this event');
+            }
+            else if (foundEvent.status == 'C') {
+                return Promise.reject('You cannot edit an event that has been cancelled');
             }
             else {
                 return eventService.updateEventById(req.params.eventId, req.user.userId, req.body);
@@ -662,6 +668,9 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
             }
             else if ( now >= editDeadline) {
                 return Promise.reject('It is too late to edit this location');
+            }
+            else if (foundEvent.status == 'C') {
+                return Promise.reject('You cannot edit an event that has been cancelled');
             }
             else {
                 return eventService.updateLocationByEventId(req.params.eventId, req.body);
@@ -749,11 +758,15 @@ app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('gene
         });
 });
 
+// This route removes a registered user from an event
 app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to do this');
+            }
+            else if (foundEvent.status == 'C') {
+                return Promise.reject('You cannot remove users from a cancelled event');
             }
             else {
                 return eventService.removeUserFromEvent(req.params.eventId, req.params.userId, foundEvent.event_title)
@@ -781,6 +794,41 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
                 res.status(500).json({ "message": err });
         });
 });
+
+app.put('/api/event/:eventId/cancel', passport.authenticate('general', {session: false}), (req, res) => {
+    let theEvent;
+    let eventOwner;
+    eventService.getEventById(req.params.eventId)
+        .then((foundEvent) => {
+            theEvent = foundEvent;
+            let now = new Date();
+            let eventStart = new Date(theEvent.date_from + ' ' + theEvent.time_from);
+            if (now >= eventStart) {
+                return Promise.reject('It is too late to cancel this event');
+            }
+            return userService.getUserById(theEvent.UserUserId);
+        })
+        .then((foundUser) => {
+            eventOwner = foundUser;
+            if (req.user.userId != theEvent.UserUserId && !(req.user.isAdmin && req.user.partyAffiliation == eventOwner.partyAffiliation)) {
+                return Promise.reject('You are not authorized to cancel this event');
+            }
+            return eventService.cancelEvent(theEvent.event_id);
+        })
+        .then((msg) => {
+            res.json({ "message": msg }).end();
+            return eventService.sendEventCancellationNoticeToOwner(eventOwner, theEvent, req.body.reason);
+        })
+        .then((msg) => {
+            console.log(msg);
+            return eventService.sendEventCancellationEmails(theEvent, req.body.reason);
+        })
+        .then((msg) => console.log(msg))
+        .catch((err) => {
+            if (!res.finished)
+                res.status(500).json({ "message": err });
+        });
+})
 
 app.post('/api/createFeedback',[
 
