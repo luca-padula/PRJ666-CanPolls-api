@@ -131,7 +131,12 @@ module.exports.createEvent = function(eventData){
                         EventEventId: events[events.length - 1].event_id
                     })
                     console.log("prev name"+ eventData.photo);
-                    var renameImageTo = events[events.length - 1].event_id + ""+eventData.photo;
+                    var renameImageTo;
+                    if(eventData.photo==""){
+                        renameImageTo="notAvailable.jpg";
+                    }else{
+                        renameImageTo = events[events.length - 1].event_id + ""+eventData.photo;
+                    }
                     Event.findOne({
                         where:{event_id: events[events.length - 1].event_id}
                     })
