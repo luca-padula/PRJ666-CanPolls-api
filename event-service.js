@@ -621,7 +621,7 @@ module.exports.createFeedback = function(feedback){
             feedback_desc: feedback.feedback_desc,
             feedback_date: feedback.feedback_date,
             feedback_rating: feedback.feedback_rating,
-            userUserId: feedback.userUserId,
+            UserUserId: feedback.userUserId,
             EventEventId: feedback.eventEventId
         });
     })
