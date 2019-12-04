@@ -638,11 +638,7 @@ module.exports.getFeedbackByEventId = function(eventid){
     return new Promise((resolve, reject)=>{
         console.log(eventid);
         Feedback.findAll({
-            include: [
-                {
-                    model: User
-                 }     
-                ],
+            include: [User],
             where:{EventEventId:eventid}
         })
         .then((feedback)=>{
