@@ -398,6 +398,48 @@ module.exports.cancelRegistration = function(eventId, userId) {
     });
 }
 
+// This function takes an event object, a user object, and a string and sends an email to the
+// user confirming their registration or cancellation for the event
+module.exports.sendEventActionConfirmation = function(eventId, userId, action) {
+    return new Promise((resolve, reject) => {
+        let theEvent;
+        let theUser;
+        this.getEventById(eventId)
+            .then((foundEvent) => {
+                theEvent = foundEvent;
+                return userService.getUserById(userId);
+            })
+            .then((foundUser) => {
+                if (foundUser) {
+                    theUser = foundUser;
+                    if (theUser.notificationsOn) {
+                        let mailLink = mailService.appUrl + '\/event\/' + theEvent.event_id;
+                        let mailText = 'Hello ' + theUser.firstName + ',\n'
+                            + 'You have ' + (action == 'R' ? 'registered' : 'cancelled your registration') + ' for the event:\n'
+                            + '\"' + theEvent.event_title + '\"\n'
+                            + 'You can view the event at the link below:\n'
+                            + mailLink;
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: theUser.email,
+                            subject: 'PRJ666 CanPolls Event Confirmation',
+                            text: mailText
+                        };
+                        return mailService.sendEmail(mailData);
+                    }
+                }
+                else {
+                    return Promise.reject('User does not exist');
+                }
+            })
+            .then(() => resolve('Successfully sent event confirmation email to user ' + theUser.userName))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
 // This function takes an event id and cancels the event with that id
 module.exports.cancelEvent = function(eventId) {
     return new Promise((resolve, reject) => {

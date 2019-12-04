@@ -745,7 +745,6 @@ app.get('/api/events/attendedByUser/:userId', (req, res) => {
         });
 });
 
-
 // This route returns a count of all the registrations (registration status is 'registered') for a given event id
 app.get('/api/event/:eventId/registrationCount', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.getRegistrationsWithCount(req.params.eventId)
@@ -755,13 +754,16 @@ app.get('/api/event/:eventId/registrationCount', passport.authenticate('general'
         });
 });
 
-
-
+// This route registers a user for an event
 app.post('/api/event/:eventId/registerUser/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     eventService.registerUserForEvent(req.params.eventId, req.params.userId)
         .then((msg) => {
             res.json({ "message": msg }).end();
             return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'registered');
+        })
+        .then((msg) => {
+            console.log(msg);
+            return eventService.sendEventActionConfirmation(req.params.eventId, req.params.userId, 'R');
         })
         .then((msg) => console.log(msg))
         .catch((err) => {
@@ -792,6 +794,7 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
         });
 });
 
+// This route cancels a registration for an event
 app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authenticate('general', {session: false}), (req, res) => {
     if (req.user.userId != req.params.userId)
         return res.json({"message": 'You are not authorized to do this'});
@@ -800,6 +803,10 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
             res.json({ "message": msg }).end();
             return eventService.sendEventRegistrationNoticeToOwner(req.params.eventId, 'cancelled');
         })
+        .then((msg) => {
+            console.log(msg);
+            return eventService.sendEventActionConfirmation(req.params.eventId, req.params.userId, 'C');
+        })
         .then((msg) => console.log(msg))
         .catch((err) => {
             if (!res.finished)
@@ -807,6 +814,7 @@ app.delete('/api/event/:eventId/cancelRegistration/:userId', passport.authentica
         });
 });
 
+// This route cancels an event
 app.put('/api/event/:eventId/cancel', passport.authenticate('general', {session: false}), (req, res) => {
     let theEvent;
     let eventOwner;
