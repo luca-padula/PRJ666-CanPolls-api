@@ -386,6 +386,85 @@ module.exports.cancelRegistration = function(eventId, userId) {
     });
 }
 
+// This function takes an event id and cancels the event with that id
+module.exports.cancelEvent = function(eventId) {
+    return new Promise((resolve, reject) => {
+        Event.update({
+            status: 'C'
+        }, {
+            where: { event_id: eventId }
+        })
+            .then((updatedEvents) => {
+                resolve('You have successfully cancelled your event');
+            })
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+// This function takes an event and sends emails to users registered for that event
+// notifying them that it has been cancelled
+module.exports.sendEventCancellationEmails = function(event, reason) {
+    return new Promise((resolve, reject) => {
+        this.getRegistrationsWithUsersByEventId(event.event_id)
+            .then((registrations) => {
+                for (let i = 0; i < registrations.length; ++i) {
+                    if (registrations[i].status == 'registered' && registrations[i].User.notificationsOn) {
+                        let mailLink = mailService.appUrl + '\/event\/' + event.event_id;
+                        let mailText = 'Hello ' + registrations[i].User.firstName + ',\nThe following event for which you are registered has been cancelled:\n'
+                            + '\"' + event.event_title + '\"\n'
+                            + 'You can view the cancelled event at the link below:\n'
+                            + mailLink + '\n'
+                            + 'The reason for cancellation was:\n'
+                            + '\"' + reason + '\"';
+                        let mailData = {
+                            from: mailService.appFromEmailAddress,
+                            to: registrations[i].User.email,
+                            subject: 'PRJ666 CanPolls Event Cancelled',
+                            text: mailText
+                        };                        
+                        mailService.sendEmail(mailData)
+                            .then(() => console.log('Successfully sent event cancellation email to user ' + registrations[i].User.userName))
+                            .catch((err) => console.log('Failed to send event cancellation email to user ' + registrations[i].User.userName, err));
+                    }
+                }
+                return 'Sending event cancellation emails';
+            })
+            .then((msg) => resolve(msg))
+            .catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
+
+module.exports.sendEventCancellationNoticeToOwner = function(eventOwner, event, reason) {
+    return new Promise((resolve, reject) => {
+        if (eventOwner.notificationsOn) {
+            let mailLink = mailService.appUrl + '\/event\/' + event.event_id;
+            let mailText = 'Hello ' + eventOwner.firstName + ',\n'
+                + 'Your event has been cancelled:\n'
+                + '\"' + event.event_title + '\"\n'
+                + 'You can view the cancelled event at the link below but you will no longer be able to edit it:\n'
+                + mailLink + '\n'
+                + 'The reason for cancellation was:\n'
+                + '\"' + reason + '\"';
+            let mailData = {
+                from: mailService.appFromEmailAddress,
+                to: eventOwner.email,
+                subject: 'PRJ666 CanPolls Event Cancelled',
+                text: mailText
+            };
+            mailService.sendEmail(mailData)
+                .then(() => console.log('Successfully sent event cancellation email to owner ' + eventOwner.userName))
+                .catch((err) => console.log('Failed to send event cancellation email to owner ' + eventOwner.userName, err));
+        }
+        resolve('Sending event cancellation notice to owner');
+    });
+}
+
 // This function sends an email to the owner of a given event id notifying them that
 // a user has registered for their event
 module.exports.sendEventRegistrationNoticeToOwner = function(eventId, updateType) {
@@ -423,6 +502,7 @@ module.exports.sendEventRegistrationNoticeToOwner = function(eventId, updateType
     });
 }
 
+// This function removes a registered user from an event
 module.exports.removeUserFromEvent = function(eventId, userId, eventName) {
     return new Promise((resolve, reject) => {
         EventRegistration.update({
