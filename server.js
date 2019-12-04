@@ -561,8 +561,8 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         .isNumeric().withMessage('Invalid attendee limit entered')
         .bail()
         .custom((value, { req }) => {
-            if (value < 0) {
-                throw new Error('Invalid attendee limit entered');
+            if (value < 0 || value > 99999) {
+                throw new Error('Please enter an attendee limit between 0 and 99,999');
             }
             return true;
         }),

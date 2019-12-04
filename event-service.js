@@ -172,8 +172,9 @@ module.exports.createEvent = function(eventData){
     });
 }
 
+// This function takes an event id, a user id, and an event object and updates the event
+// with the new event data
 module.exports.updateEventById = function(eId, uId, eventData) {
-    // TO-DO: Send email to admin of corresponding party requesting approval after updating
     return new Promise((resolve, reject) => {
         console.log("1stevdata.photo: "+eventData.photo);
         var renameImageTo = eId + ""+eventData.photo;
@@ -198,6 +199,7 @@ module.exports.updateEventById = function(eId, uId, eventData) {
     });
 }
 
+// This function takes an event id and returns the corresponsing event
 module.exports.getLocationByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         Location.findOne({
@@ -211,6 +213,8 @@ module.exports.getLocationByEventId = function(eId) {
     });
 }
 
+// This function takes an event id and a location object and updates the event's location
+// with the new location data
 module.exports.updateLocationByEventId = function(eId, locationData) {
     return new Promise((resolve, reject) => {
         locationData.postal_code = locationData.postal_code.replace(/\s/g, '').toUpperCase();
@@ -232,6 +236,8 @@ module.exports.updateLocationByEventId = function(eId, locationData) {
     });
 }
 
+// This function takes an event and sends emails to users registered for that event
+// notifying them that it has been updated
 module.exports.sendEventUpdateEmails = function(eId) {
     return new Promise((resolve, reject) => {
         this.getRegistrationsWithUsersByEventId(eId)
@@ -262,6 +268,8 @@ module.exports.sendEventUpdateEmails = function(eId) {
     });
 }
 
+// This function takes an event id and returns all registrations for that event, regardless of status,
+// with the user object also included in each row
 module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findAll({
@@ -278,6 +286,7 @@ module.exports.getRegistrationsWithUsersByEventId = function(eId) {
     });
 }
 
+// This function takes an event id and a user id and returns the corresponding user's registration for that event
 module.exports.getRegistration = function(eventId, userId) {
     return new Promise((resolve, reject) => {
         EventRegistration.findOne({
@@ -309,6 +318,7 @@ module.exports.getRegistrationsWithCount = function(eventId) {
     });
 }
 
+// This function takes an event id and a user id and registers the corresponding user for that event
 module.exports.registerUserForEvent = function(eventId, userId) {
     let theEvent;
     return new Promise((resolve, reject) => {
@@ -356,6 +366,8 @@ module.exports.registerUserForEvent = function(eventId, userId) {
     });
 }
 
+// This function takes an event id and a user id and cancels the corresponding user's
+// registration for that event
 module.exports.cancelRegistration = function(eventId, userId) {
     return new Promise((resolve, reject) => {
         this.getEventById(eventId)
@@ -440,6 +452,8 @@ module.exports.sendEventCancellationEmails = function(event, reason) {
     });
 }
 
+// This function takes a user object, an event object, and a string and sends an email to the
+// event owner notifying them that their event has been cancelled
 module.exports.sendEventCancellationNoticeToOwner = function(eventOwner, event, reason) {
     return new Promise((resolve, reject) => {
         if (eventOwner.notificationsOn) {
