@@ -765,6 +765,9 @@ app.delete('/api/event/:eventId/user/:userId', passport.authenticate('general', 
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
                 return Promise.reject('You are not authorized to do this');
             }
+            else if (foundEvent.status == 'C') {
+                return Promise.reject('You cannot remove users from a cancelled event');
+            }
             else {
                 return eventService.removeUserFromEvent(req.params.eventId, req.params.userId, foundEvent.event_title)
             }
