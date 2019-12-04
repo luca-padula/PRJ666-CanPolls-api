@@ -594,8 +594,10 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }
+    let theEvent;
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
+            theEvent = foundEvent;
             let now = new Date();
             let editDeadline = new Date(foundEvent.date_from + ' ' + foundEvent.time_from);
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
@@ -613,6 +615,10 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         })
         .then((msg) => {
             res.json({ "message": msg }).end();
+            return userService.sendAdminEventDetails(theEvent.UserUserId, theEvent.event_id);
+        })
+        .then(() => {
+            console.log('Successfully sent approval request email to admin');
             return eventService.sendEventUpdateEmails(req.params.eventId);
         })
         .then((msg) => console.log(msg))
@@ -659,8 +665,10 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
     if(!errors.isEmpty()){
         return res.status(422).json({"validationErrors": errors.array()});
     }
+    let theEvent;
     eventService.getEventById(req.params.eventId)
         .then((foundEvent) => {
+            theEvent = foundEvent;
             let now = new Date();
             let editDeadline = new Date(foundEvent.date_from + ' ' + foundEvent.time_from);
             if (!foundEvent || foundEvent.UserUserId != req.user.userId) {
@@ -678,6 +686,10 @@ app.put('/api/location/:eventId', passport.authenticate('general', {session: fal
         })
         .then((msg) => {
             res.json({ "message": msg }).end();
+            return userService.sendAdminEventDetails(theEvent.UserUserId, theEvent.event_id);
+        })
+        .then(() => {
+            console.log('Successfully sent approval request email to admin');
             return eventService.sendEventUpdateEmails(req.params.eventId);
         })
         .then((msg) => console.log(msg))
