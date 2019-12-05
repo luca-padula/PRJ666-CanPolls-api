@@ -639,7 +639,7 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         });
 });
 
-// This route takes an event id in the request parameters returns the location for that event
+// This route takes an event id in the request parameters and returns the location for that event
 app.get('/api/location/:eventId', (req, res) => {
     eventService.getLocationByEventId(req.params.eventId)
         .then((location) => {
