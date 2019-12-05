@@ -874,10 +874,10 @@ app.post('/api/createFeedback',[
     }
     eventService.createFeedback(req.body)
     .then((msg)=>{
-        res.json({"message": msg});
+        res.json({msg});
     })
     .catch((msg)=>{
-        res.status(422).json({"message": msg});
+        res.status(422).json({msg});
     });
 })
 
@@ -891,7 +891,17 @@ app.get('/api/feedback/:eventId', (req,res)=>{
         res.status(422).json({"message": err});
     });
 });
-
+app.get('/api/feedbacks/:userId', (req,res)=>{
+    console.log(req.params.userId);
+    eventService.getFeedbacksByUserId(req.params.userId)
+    .then((feedbacks)=>{
+        res.json(feedbacks);
+        console.log(feedbacks);
+    })
+    .catch((err)=>{
+        res.status(422).json({"message": err});
+    });
+});
 
 app.post('/api/upload',  upload.single('file'), (req, res) => {
     //console.log("Req file: "+JSON.stringify(req.file));

@@ -767,10 +767,10 @@ module.exports.createFeedback = function(feedback){
             feedback_desc: feedback.feedback_desc,
             feedback_date: feedback.feedback_date,
             feedback_rating: feedback.feedback_rating,
-            UserUserId: feedback.userUserId,
-            EventEventId: feedback.eventEventId
-        });
-    })
+            UserUserId: feedback.UserUserId,
+            EventEventId: feedback.EventEventId
+        })
+    
     .then((createdFeedback) => {
         resolve(createdFeedback);
     })
@@ -778,6 +778,7 @@ module.exports.createFeedback = function(feedback){
         console.log(err);
         reject(err);
     });
+});
 }
 
 module.exports.getFeedbackByEventId = function(eventid){
@@ -793,6 +794,21 @@ module.exports.getFeedbackByEventId = function(eventid){
         })
         .catch((err)=>{
             console.log(err.message);
+            reject('cannot get feedback');
+        })
+    });
+}
+
+module.exports.getFeedbacksByUserId = function(userId){
+    return new Promise((resolve, reject)=>{
+        console.log(userId);
+        Feedback.findAll({
+            where: {UserUserId: userId}
+        })
+        .then((feedbacks)=>{
+            resolve(feedbacks);
+        })
+        .catch((err)=>{
             reject('cannot get feedback');
         })
     });
