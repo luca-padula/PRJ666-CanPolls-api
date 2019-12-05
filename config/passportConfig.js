@@ -2,7 +2,7 @@ const passport = require('passport');
 const passportJWT = require('passport-jwt');
 const jwtConfig = require('./jwtConfig.js');
 
-// Set up the JWT strategy for general authentication
+// Sets up the JWT strategy for general authentication with passport
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
 var jwtOptions = {};

@@ -144,6 +144,7 @@ app.put('/api/updateUser/:userId', [
         });
 });
 
+// This route takes data for a new user in the body and registers a new user in the database
 app.post('/api/register', [
     // Validate user input using express-validator
     check('email')
@@ -216,6 +217,8 @@ app.post('/api/register', [
         });
 });
 
+// This route takes a username in the body sends the user with that username
+// a new account verification email
 app.post('/api/resendVerificationEmail', (req, res) => {
     userService.resetVerificationHash(req.body.userName)
         .then((result) => {
@@ -229,6 +232,8 @@ app.post('/api/resendVerificationEmail', (req, res) => {
         });
 });
 
+// This route takes a user id and a token for a verification hash in the request parameters
+// and verifies the user's account
 app.post('/api/verifyEmail/:userId/:token', (req, res) => {
     userService.verifyUser(req.params.userId, req.params.token)
         .then((msg) => {
@@ -239,6 +244,7 @@ app.post('/api/verifyEmail/:userId/:token', (req, res) => {
         });
 });
 
+// This route takes user credentials in the body and authenticates a user, returning their access token
 app.post('/api/login', (req, res) => {
     userService.checkUser(req.body)
         .then((user) => {
@@ -257,6 +263,7 @@ app.post('/api/login', (req, res) => {
         });
 });
 
+// This route takes a user's email in the request body and sends that user a password reset email
 app.post('/api/forgotPassword', [
     check('email')
         .isEmail().withMessage('Invalid email entered')
@@ -270,6 +277,8 @@ app.post('/api/forgotPassword', [
         .catch((msg) => res.status(500).json({ "message": msg }));
 });
 
+// This route takes a user id and a password reset token in the request parameters and new password
+// data in the request body and resets the user's password
 app.post('/api/resetPassword/:userId/:token', [
     check('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
@@ -544,6 +553,8 @@ app.post('/api/event/:event_id', passport.authenticate('general', {session: fals
     });
 })
 
+// This route takes an event id in the request parameters and event data in the request body and
+// updates that event with the new event data
 app.put('/api/event/:eventId', passport.authenticate('general', {session: false}), [
     check('event_title')
         .trim()
@@ -628,6 +639,7 @@ app.put('/api/event/:eventId', passport.authenticate('general', {session: false}
         });
 });
 
+// This route takes an event id in the request parameters returns the location for that event
 app.get('/api/location/:eventId', (req, res) => {
     eventService.getLocationByEventId(req.params.eventId)
         .then((location) => {
@@ -638,6 +650,8 @@ app.get('/api/location/:eventId', (req, res) => {
         });
 });
 
+// This route takes an event id in the request parameters and location data in the request body and
+// updates that location with the new location data
 app.put('/api/location/:eventId', passport.authenticate('general', {session: false}), [
     check('venue_name')
         .trim()

@@ -116,6 +116,7 @@ module.exports.updateUserInfo = function (userId, userData) {
     });
 }
 
+// This function takes a user object and registers it as a new user in the database
 module.exports.registerUser = function (userData) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(userData.password, 10)
@@ -137,6 +138,7 @@ module.exports.registerUser = function (userData) {
     });
 }
 
+// This function takes a user object and sends an account verification email to the user
 module.exports.sendAccountVerificationEmail = function (user) {
     return new Promise((resolve, reject) => {
         let mailLink = mailService.appUrl + '\/verifyEmail\/' + user.userId +
@@ -234,6 +236,8 @@ module.exports.verifyUser = function (userId, token) {
     });
 }
 
+// This function takes a username and returns the user with that username from the database
+// If the user does not exist, it returns null
 module.exports.findUserByUsername = function (username) {
     return new Promise((resolve, reject) => {
         User.findOne({
@@ -251,6 +255,8 @@ module.exports.findUserByUsername = function (username) {
     });
 }
 
+// This function takes an email and returns the user with that email from the database
+// If the user does not exist, it returns null
 module.exports.findUserByEmail = function (email) {
     return new Promise((resolve, reject) => {
         User.findOne({
@@ -268,6 +274,7 @@ module.exports.findUserByEmail = function (email) {
     });
 }
 
+// This function takes an object with user credentials from a login attempt and verifies the credentials
 module.exports.checkUser = function (userData) {
     return new Promise((resolve, reject) => {
         let foundUser;

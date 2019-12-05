@@ -93,7 +93,6 @@ var User = database.define('User', {
  User.hasMany(EventRegistration);
  EventRegistration.belongsTo(User);
 Feedback.belongsTo(User);
-// see https://web322.ca/notes/week07 for more details
 
 // Export User model to use in other modules
 module.exports = {User};
