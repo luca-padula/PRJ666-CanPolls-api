@@ -7,20 +7,6 @@ const mailService = require('./mail-service.js');
 const UserModel = require('./models/User.js');
 let User = UserModel.User;
 
-
-module.exports.getAllUsers = function () {
-    return new Promise((resolve, reject) => {
-        User.findAll({})
-            .then((users) => {
-                resolve(users);
-            })
-            .catch((err) => {
-                console.log(err);
-                reject('An error occured');
-            });
-    });
-}
-
 module.exports.getUserById = function (uId) {
     return new Promise((resolve, reject) => {
         User.findOne({

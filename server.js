@@ -37,16 +37,6 @@ const upload = multer({
 
 // User routes
 
-app.get('/api/users', (req, res) => {
-    userService.getAllUsers().then((msg) => {
-        res.json(msg);
-    })
-    .catch((msg) => {
-        res.status(422).json({"message": msg});
-    });
-});
-
-
 app.get('/api/users/:userId', (req, res) => {
     userService.getUserById(req.params.userId).then((msg) => {
         res.json(msg);
